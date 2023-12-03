@@ -4,12 +4,13 @@
 
 multiple_outputs = true
 class = "components.source.SourceComponent"
-per_train = false
+per_train = true
+run_per_train = false
 source = "in/ar41.csv"
 
 [components.airtemp_1]
 
-class = "components.moving_average.MovingAverageOutlierDetector"
+class = "components.moving_average_outliers.MovingAverageOutlierDetector"
 dependencies = [
     { component = "source", batch_size = 100 }
 ]

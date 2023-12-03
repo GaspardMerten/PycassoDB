@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Iterable
 
 import pandas as pd
 import pyarrow
@@ -14,6 +14,7 @@ class StorageManager:
         self.path = path
         self._cached_train_ids = None
 
+
     def _update_train_ids(self, train_ids: set):
         """Update cached train_ids and train_ids.json"""
 
@@ -21,8 +22,8 @@ class StorageManager:
 
         if self._cached_train_ids is None:
             if os.path.exists(train_ids_file):
-                self._cached_train_ids = json.load(
-                    open(f"{self.path}/train_ids.json", "r")
+                self._cached_train_ids = set(
+                    json.load(open(f"{self.path}/train_ids.json", "r"))
                 )
             else:
                 self._cached_train_ids = set()
@@ -117,12 +118,13 @@ class StorageManager:
     def _list_files(
         directory: str,
         period: Period = None,
-    ) -> List[str]:
+    ) -> Iterable[str]:
         """List all files in a directory, optionally filtering by a date period."""
         if not os.path.exists(directory):
             return []
 
         files = os.listdir(directory)
+
         if period:
             start_date, end_date = period
             start_date = start_date or datetime.min
@@ -133,7 +135,10 @@ class StorageManager:
                 for file in files
                 if start_date <= datetime.strptime(file, "%Y-%m-%d.parquet") <= end_date
             ]
-        return files
+
+        files.sort(key=lambda file: datetime.strptime(file, "%Y-%m-%d.parquet"))
+
+        return list(os.path.join(directory, file) for file in files)
 
     def get_for_train(
         self,
@@ -149,11 +154,9 @@ class StorageManager:
 
         for index, file in enumerate(files):
             try:
-                df = pd.concat(
-                    [df, pd.read_parquet(f"{self.path}/{name}/{train_id}/{file}")]
-                )
+                df = pd.concat([df, pd.read_parquet(file)])
                 if index == 0:
-                    df = df[period[0]]
+                    df = df[df.index >= period[0]]
                 if len(df) >= limit:
                     df = df[:limit]
                     break
@@ -163,7 +166,10 @@ class StorageManager:
         return (
             df
             if period is None
-            else df[period[0] or datetime.min : period[1] or datetime.max]
+            else df[
+                (df.index >= (period[0] or datetime.min))
+                & (df.index <= (period[1] or datetime.max))
+            ]
         )
 
     def get_for_all_trains(
@@ -201,7 +207,7 @@ class StorageManager:
 
         for index, file in enumerate(files):
             try:
-                df = pd.concat([df, pd.read_parquet(f"{self.path}/{name}/{file}")])
+                df = pd.concat([df, pd.read_parquet(file)])
                 if index == 0:
                     df = df[period[0]]
                 if len(df) >= limit:
@@ -224,18 +230,18 @@ class StorageManager:
             files = self._list_files(f"{self.path}/{name}")
 
         if not files:
-            return datetime.min
-
-        # Sort files by date
-        files = sorted(files, key=lambda x: datetime.strptime(x, "%Y-%m-%d.parquet"))
+            return pd.Timestamp(datetime.min)
 
         # Get last file
-        last_file = files[-1]
+        last_file = list(files)[-1]
 
         # Read last file
-        df = pd.read_parquet(f"{self.path}/{name}/{last_file}")
+        df = pd.read_parquet(last_file)
         # Return last timestamp
-        return df.index[-1]
+        print(files)
+        print("XX", train_id)
+        print(df)
+        return df.index.max()
 
     def has_sufficient_data_since(
         self, timestamp: datetime, amount: int, name: str, train_id: str = None
@@ -248,17 +254,14 @@ class StorageManager:
         else:
             files = self._list_files(f"{self.path}/{name}", (timestamp, None))
 
-        # Sort files by date
-        files = sorted(files, key=lambda x: datetime.strptime(x, "%Y-%m-%d.parquet"))
-
         count = 0
         is_first = True
 
         for file in files:
-            df = pd.read_parquet(f"{self.path}/{name}/{file}")
+            df = pd.read_parquet(file)
 
             if is_first:
-                df = df[timestamp:]
+                df = df[df.index >= timestamp]
                 is_first = False
 
             count += len(df)

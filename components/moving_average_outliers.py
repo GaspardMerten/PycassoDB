@@ -6,23 +6,19 @@ from src.mining.timeseries_outliers import compute_outliers
 
 
 class MovingAverageOutlierDetector(Component):
-    def run(self, source_df: pd.DataFrame) -> pd.DataFrame:
+    def run(self, source: pd.DataFrame) -> pd.DataFrame:
+        # Print min datetime
+        print(source.index.min())
         """Run the component."""
         column = self.config.get("column")
         window = self.config.get("window")
 
-        ts = pd.Series(source_df[column], index=source_df.index)
+        ts = pd.Series(source[column], index=source.index)
 
         # Compute moving average
-        ma = moving_average(ts, window)
+        ma = moving_average(ts, window, shift=1)
 
         # Compute outlier
         outliers = compute_outliers(ts, ma, self.config.get("sensitivity"))
 
-        # Now based on the outliers (true/false), filter the source_df only
-        # for the outliers
-        source_df = source_df[outliers.index]
-        # Remove all columns except timestamp and column
-        source_df = source_df[["timestamp", column]]
-
-        return source_df
+        return pd.DataFrame(outliers, columns=[column])
