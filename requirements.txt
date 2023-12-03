@@ -1,0 +1,6 @@
+SQLAlchemy
+pandas
+psycopg2-binary
+architect
+pyproj
+pyarrow
