@@ -7,8 +7,6 @@ from src.mining.timeseries_outliers import compute_outliers
 
 class MovingAverageOutlierDetector(Component):
     def run(self, source: pd.DataFrame) -> pd.DataFrame:
-        # Print min datetime
-        print(source.index.min())
         """Run the component."""
         column = self.config.get("column")
         window = self.config.get("window")

@@ -14,7 +14,6 @@ class StorageManager:
         self.path = path
         self._cached_train_ids = None
 
-
     def _update_train_ids(self, train_ids: set):
         """Update cached train_ids and train_ids.json"""
 
@@ -238,9 +237,6 @@ class StorageManager:
         # Read last file
         df = pd.read_parquet(last_file)
         # Return last timestamp
-        print(files)
-        print("XX", train_id)
-        print(df)
         return df.index.max()
 
     def has_sufficient_data_since(
