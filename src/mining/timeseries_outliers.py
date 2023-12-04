@@ -1,12 +1,12 @@
 import pandas as pd
 
 
-def compute_outliers(ts1: pd.Series, ts2: pd.Series, sensitivity: int) -> pd.Series:
+def compute_outliers(ts1: pd.Series, ts2: pd.Series, tolerance: int) -> pd.Series:
     """
     This function takes two time series as input and returns the outliers of the
     :param ts1: The first time series
     :param ts2: The second time series
-    :param sensitivity: The sensitivity of the outlier detection
+    :param tolerance: The tolerance of the outlier detection
     :return: The outliers of the difference between the two time series
     """
 
@@ -21,6 +21,6 @@ def compute_outliers(ts1: pd.Series, ts2: pd.Series, sensitivity: int) -> pd.Ser
     std = diff.std()
 
     # Compute outliers
-    outliers = diff[diff > mean + sensitivity * std]
+    outliers = diff[diff > mean + tolerance * std]
 
     return outliers

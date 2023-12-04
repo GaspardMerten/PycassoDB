@@ -19,13 +19,12 @@ class StorageManager:
 
         train_ids_file = f"{self.path}/train_ids.json"
 
-        if self._cached_train_ids is None:
-            if os.path.exists(train_ids_file):
-                self._cached_train_ids = set(
-                    json.load(open(f"{self.path}/train_ids.json", "r"))
-                )
-            else:
-                self._cached_train_ids = set()
+        if os.path.exists(train_ids_file):
+            self._cached_train_ids = set(
+                json.load(open(f"{self.path}/train_ids.json", "r"))
+            )
+        else:
+            self._cached_train_ids = set()
 
         # Check if there are new train_ids
         new_train_ids = train_ids - self._cached_train_ids
@@ -35,6 +34,8 @@ class StorageManager:
             self._cached_train_ids = self._cached_train_ids.union(new_train_ids)
             # Update train_ids.json
             json.dump(list(self._cached_train_ids), open(train_ids_file, "w"))
+
+
 
     @staticmethod
     def _append_df_to_parquet(filename, df):
@@ -99,6 +100,10 @@ class StorageManager:
         :param name: The name of the dataset
         :param train_id: Optional, the train_id to group by
         """
+
+        if data.empty:
+            return
+
         self._validate_index(data)
 
         os.makedirs(f"{self.path}/{name}", exist_ok=True)
@@ -175,26 +180,22 @@ class StorageManager:
         self, name: str, period: Period = None, limit: int = None
     ) -> pd.DataFrame:
         """Get data for all trains, optionally filtering by a date period."""
-        files = self._list_files(f"{self.path}/{name}", period)
 
         df = pd.DataFrame()
 
-        for index, file in enumerate(files):
-            try:
-                df = pd.concat([df, pd.read_parquet(f"{self.path}/{name}/{file}")])
-                if index == 0:
-                    df = df[period[0]]
-                if len(df) >= limit:
-                    df = df[:limit]
-                    break
-            except pyarrow.lib.ArrowInvalid:
-                pass
+        for train_id in self.retrieve_train_ids():
+            train_df = self.get_for_train(name, train_id, period, limit)
+            train_df["train_id"] = int(train_id)
+            df = pd.concat([df, train_df])
 
-        return (
-            df
-            if period is None
-            else df[period[0] or datetime.min : period[1] or datetime.max]
-        )
+        # Sort by timestamp
+        df.sort_index(inplace=True)
+
+        # Keep only first limit rows
+        if limit:
+            df = df[:limit]
+
+        return df
 
     def get_for_agnostic(
         self, name: str, period: Period = None, limit: int = None

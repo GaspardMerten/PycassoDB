@@ -7,6 +7,22 @@ import pandas as pd
 from src.framework.component import Component
 
 
+MATCHING = {
+    "RS_E_InAirTemp_PC1": "air_temp_1",
+    "RS_E_InAirTemp_PC2": "air_temp_2",
+    "RS_E_OilPress_PC1": "oil_press_1",
+    "RS_E_OilPress_PC2": "oil_press_2",
+    "RS_E_RPM_PC1": "rpm_1",
+    "RS_E_RPM_PC2": "rpm_2",
+    "RS_E_WatTemp_PC1": "water_temp_1",
+    "RS_E_WatTemp_PC2": "water_temp_2",
+    "RS_T_OilTemp_PC1": "oil_temp_1",
+    "RS_T_OilTemp_PC2": "oil_temp_2",
+}
+
+SOURCE_DATA_COLS = list(MATCHING.values())
+
+
 class SourceComponent(Component):
     def run(self) -> None:
         print("Running component", self.config.get("source"))
@@ -33,21 +49,7 @@ class SourceComponent(Component):
 
             vehicle_id_col = "mapped_veh_id"
 
-            df = df.rename(
-                columns={
-                    vehicle_id_col: "train_id",
-                    "RS_E_InAirTemp_PC1": "air_temp_1",
-                    "RS_E_InAirTemp_PC2": "air_temp_2",
-                    "RS_E_OilPress_PC1": "oil_press_1",
-                    "RS_E_OilPress_PC2": "oil_press_2",
-                    "RS_E_RPM_PC1": "rpm_1",
-                    "RS_E_RPM_PC2": "rpm_2",
-                    "RS_E_WatTemp_PC1": "water_temp_1",
-                    "RS_E_WatTemp_PC2": "water_temp_2",
-                    "RS_T_OilTemp_PC1": "oil_temp_1",
-                    "RS_T_OilTemp_PC2": "oil_temp_2",
-                }
-            )
+            df = df.rename(columns={vehicle_id_col: "train_id", **MATCHING})
 
             # Convert all columns to int16
             for col in df.columns:
