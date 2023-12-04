@@ -1,6 +1,8 @@
 SQLAlchemy
-pandas
+pandas~=2.1.3
 psycopg2-binary
 architect
 pyproj
-pyarrow
+pyarrow~=14.0.1
+scikit-learn~=1.3.2
+matplotlib~=3.8.2
