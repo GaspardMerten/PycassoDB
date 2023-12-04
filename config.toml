@@ -13,15 +13,36 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
-[components.airtemp_1]
+[components.ma_outliers]
 
 class = "components.moving_average_outliers.MovingAverageOutlierDetector"
 dependencies = [
-    { component = "source", batch_size = 100 }
+   { component = "source", batch_size = 100 }
 ]
 
 window = 10
-column = "air_temp_1"
-sensitivity = 3
+tolerance = 2
+
+
+[components.dbscan]
+
+class = "components.dbscan.DBScanOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+]
+per_train = true
+run_per_train = false
+
+
+
+
+[components.kmeans]
+
+class = "components.kmeans.KMeansOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+]
+per_train = true
+run_per_train = false
 
 
