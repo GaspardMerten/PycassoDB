@@ -1,27 +1,27 @@
 [globals]
 
-storage_folder = "data_2"
-runner_persistence = "data_2/runner_persistence.json"
+storage_folder = "data"
+runner_persistence = "data/runner_persistence.json"
 
 [components]
+
+[components.data_cleaning]
+
+class = "components.preprocess.data_cleaning.DataCleaning"
+source = "in/ar41.csv"
+output = "assets/clean_data.csv"
 
 [components.source]
 
 multiple_outputs = true
 class = "components.source.SourceComponent"
-per_train = true
+dependencies = [
+    { component = "data_cleaning", batch_size = 10_000 } # 10_000 is roughly 1 day
+]
+per_train = false
 run_per_train = false
-source = "in/ar41.csv"
+source = "assets/clean_data.csv"
 
-
-#[components.data_cleaning]
-#
-#class = "components.preprocess.data_cleaning.DataCleaningComponent"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-#]
-#
-#
 #[components.chainsaw_preprocess]
 #
 #class = "components.preprocess.chainsaw_processing.PreprocessComponent"
@@ -31,37 +31,37 @@ source = "in/ar41.csv"
 #]
 #
 
-[components.ma_outliers]
-
-class = "components.moving_average_outliers.MovingAverageOutlierDetector"
-dependencies = [
-   { component = "source", batch_size = 100 }
-]
-
-window = 10
-tolerance = 2
-
-
-[components.dbscan]
-
-class = "components.dbscan.DBScanOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-
-
-
-
-[components.kmeans]
-
-class = "components.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }, # 10_000 is roughly 1 day
-    { component = "preprocess", batch_size = 10_000 }
-]
-per_train = true
-run_per_train = false
-
+#[components.ma_outliers]
+#
+#class = "components.moving_average_outliers.MovingAverageOutlierDetector"
+#dependencies = [
+#   { component = "source", batch_size = 100 }
+#]
+#
+#window = 10
+#tolerance = 2
+#
+#
+#[components.dbscan]
+#
+#class = "components.dbscan.DBScanOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+#]
+#per_train = true
+#run_per_train = false
+#
+#
+#
+#
+#[components.kmeans]
+#
+#class = "components.kmeans.KMeansOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }, # 10_000 is roughly 1 day
+#    { component = "preprocess", batch_size = 10_000 }
+#]
+#per_train = true
+#run_per_train = false
+#
 
