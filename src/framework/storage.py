@@ -35,8 +35,6 @@ class StorageManager:
             # Update train_ids.json
             json.dump(list(self._cached_train_ids), open(train_ids_file, "w"))
 
-
-
     @staticmethod
     def _append_df_to_parquet(filename, df):
         """Append new data to existing parquet file"""
