@@ -5,31 +5,21 @@ runner_persistence = "data/runner_persistence.json"
 
 [components]
 
-[components.data_cleaning]
-
-class = "components.preprocess.data_cleaning.DataCleaning"
-source = "in/ar41.csv"
-output = "assets/clean_data.csv"
-
 [components.source]
 
 multiple_outputs = true
 class = "components.source.SourceComponent"
-dependencies = [
-    { component = "data_cleaning", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = false
+per_train = true
 run_per_train = false
-source = "assets/clean_data.csv"
+source = "in/ar41.csv"
 
-#[components.chainsaw_preprocess]
-#
-#class = "components.preprocess.chainsaw_processing.PreprocessComponent"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }, # 10_000 is roughly 1 day
-#    { component = "data_cleaning", batch_size = 10_000 }
-#]
-#
+[components.chainsaw_preprocess]
+
+class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
+dependencies = [
+    { component = "source", batch_size = 1_000 }
+]
+
 
 #[components.ma_outliers]
 #
@@ -50,8 +40,6 @@ source = "assets/clean_data.csv"
 #]
 #per_train = true
 #run_per_train = false
-#
-#
 #
 #
 #[components.kmeans]

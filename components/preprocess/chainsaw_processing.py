@@ -10,14 +10,19 @@ class ChainSawProcessing(Component):
         # Create a copy of the source dataframe
         df = source.copy()
 
-        # Sort by timestamps_UTC
-        timestamp_col = 'timestamps_UTC'
-        df[timestamp_col] = pd.to_datetime(df[timestamp_col])
-        df = df.sort_values(by=timestamp_col)
+        # Sort by timestamp
+        df.sort_index(inplace=True)
+
+        pre = len(df)
+
+        # TODO: those are not interesting, we are just removing the first data of each trip
+        #       we better use the fact that there is nothing around, not just before the tuple
         # Remove data when consecutive timestamps delta is bigger than 30min
-        df = df[df[timestamp_col].diff() < pd.Timedelta(minutes=30)]
+        df = df[df["time_difference"] < pd.Timedelta(minutes=30)]
         # Remove data when consecutive timestamps delta is smaller than 1s
-        df = df[df[timestamp_col].diff() > pd.Timedelta(seconds=1)]
+        df = df[df["time_difference"] > pd.Timedelta(seconds=1)]
+
+        post_time = len(df)
 
         # Note: speed is in m/s
         # Remove data where speed is smaller than 1km/h
@@ -25,11 +30,15 @@ class ChainSawProcessing(Component):
         # Remove data where speed is bigger than 100km/h
         df = df[df['speed'] <= 100 / 3.6]
 
+        post_speed = len(df)
+
+        print("Source data length:", pre)
+        print("Removed", pre - post_time, "rows due to time")
+        print("Removed", post_time - post_speed, "rows due to speed")
+
         # Remove data where the sensors are "not working" (return 0)
+        # Is the same as saying, either the sensor is broken, or the system is not running, so we don't need that data
         for col in SOURCE_DATA_COLS:
             df = df[df[col] != 0]
-
-        # Drop the index
-        df = df.reset_index(drop=True)
 
         return df
