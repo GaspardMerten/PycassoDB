@@ -34,6 +34,12 @@ class RunnerPersistence:
 
         self.release_lock()
 
+    def get_did_run(self, component: str, train_id: str = None) -> bool:
+        if train_id:
+            return self.memory.get(f"{component}_{train_id}", False)
+        else:
+            return self.memory.get(component, False)
+
     def get_last_timestamp(self, component: str, train_id: str = None) -> pd.Timestamp:
         if train_id:
             return pd.Timestamp(

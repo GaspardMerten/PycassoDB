@@ -13,17 +13,6 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
-[components.ma_outliers]
-
-class = "components.moving_average_outliers.MovingAverageOutlierDetector"
-dependencies = [
-   { component = "source", batch_size = 100 }
-]
-
-window = 10
-tolerance = 2
-
-
 [components.dbscan]
 
 class = "components.dbscan.DBScanOutliers"
@@ -44,5 +33,18 @@ dependencies = [
 ]
 per_train = true
 run_per_train = false
+
+
+
+
+[components.test]
+
+class = "components.test.TestOutliers"
+dependencies = [
+    { component = "source", frequency = "1d" },
+    { component = "source", frequency = "1d", before = true }
+]
+per_train = true
+run_per_train = true
 
 

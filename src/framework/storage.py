@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from datetime import datetime
 from typing import Tuple, Union, List, Iterable
@@ -7,6 +8,20 @@ import pandas as pd
 import pyarrow
 
 Period = Tuple[Union[datetime, None], Union[datetime, None]]
+
+
+def _read_rows_from_files(files, limit):
+    df = pd.DataFrame()
+    for index, file in enumerate(files):
+        try:
+            df = pd.concat([df, pd.read_parquet(file)])
+            if len(df) >= (limit or math.inf):
+                df = df[:limit]
+                break
+        except pyarrow.lib.ArrowInvalid:
+            pass
+
+    return df
 
 
 class StorageManager:
@@ -34,8 +49,6 @@ class StorageManager:
             self._cached_train_ids = self._cached_train_ids.union(new_train_ids)
             # Update train_ids.json
             json.dump(list(self._cached_train_ids), open(train_ids_file, "w"))
-
-
 
     @staticmethod
     def _append_df_to_parquet(filename, df):
@@ -122,6 +135,7 @@ class StorageManager:
     def _list_files(
         directory: str,
         period: Period = None,
+        invert: bool = False,
     ) -> Iterable[str]:
         """List all files in a directory, optionally filtering by a date period."""
         if not os.path.exists(directory):
@@ -140,9 +154,24 @@ class StorageManager:
                 if start_date <= datetime.strptime(file, "%Y-%m-%d.parquet") <= end_date
             ]
 
-        files.sort(key=lambda file: datetime.strptime(file, "%Y-%m-%d.parquet"))
+        files.sort(
+            key=lambda file: datetime.strptime(file, "%Y-%m-%d.parquet"), reverse=invert
+        )
 
         return list(os.path.join(directory, file) for file in files)
+
+    @staticmethod
+    def slice_df_with_period(df, period: List[pd.Timestamp]):
+        """Slice a dataframe with a period"""
+        if period:
+            start_date, end_date = period
+
+            # Use index (RangeIndex) to slice
+            if isinstance(df.index, pd.RangeIndex):
+                df = df[df.index >= start_date.timestamp()]
+                df = df[df.index <= end_date.timestamp()]
+
+        return df
 
     def get_for_train(
         self,
@@ -150,41 +179,23 @@ class StorageManager:
         train_id: str,
         period: Period = None,
         limit: int = None,
+        invert: bool = False,
     ) -> pd.DataFrame:
         """Get data for a specific train_id, optionally filtering by a date period."""
-        files = self._list_files(f"{self.path}/{name}/{train_id}", period)
+        files = self._list_files(f"{self.path}/{name}/{train_id}", period, invert)
+        df = _read_rows_from_files(files, limit)
 
-        df = pd.DataFrame()
-
-        for index, file in enumerate(files):
-            try:
-                df = pd.concat([df, pd.read_parquet(file)])
-                if index == 0:
-                    df = df[df.index >= period[0]]
-                if len(df) >= limit:
-                    df = df[:limit]
-                    break
-            except pyarrow.lib.ArrowInvalid:
-                pass
-
-        return (
-            df
-            if period is None
-            else df[
-                (df.index >= (period[0] or datetime.min))
-                & (df.index <= (period[1] or datetime.max))
-            ]
-        )
+        return self.slice_df_with_period(df, period)
 
     def get_for_all_trains(
-        self, name: str, period: Period = None, limit: int = None
+        self, name: str, period: Period = None, limit: int = None, invert: bool = False
     ) -> pd.DataFrame:
         """Get data for all trains, optionally filtering by a date period."""
 
         df = pd.DataFrame()
 
         for train_id in self.retrieve_train_ids():
-            train_df = self.get_for_train(name, train_id, period, limit)
+            train_df = self.get_for_train(name, train_id, period, limit, invert)
             train_df["train_id"] = int(train_id)
             df = pd.concat([df, train_df])
 
@@ -195,32 +206,35 @@ class StorageManager:
         if limit:
             df = df[:limit]
 
-        return df
+        return self.slice_df_with_period(df, period)
 
     def get_for_agnostic(
-        self, name: str, period: Period = None, limit: int = None
+        self, name: str, period: Period = None, limit: int = None, invert: bool = False
     ) -> pd.DataFrame:
         """Get data not related to a specific train, optionally filtering by a date period."""
-        files = self._list_files(f"{self.path}/{name}", period)
+        files = self._list_files(f"{self.path}/{name}", period, invert)
 
-        df = pd.DataFrame()
+        df = _read_rows_from_files(files, limit)
 
-        for index, file in enumerate(files):
-            try:
-                df = pd.concat([df, pd.read_parquet(file)])
-                if index == 0:
-                    df = df[period[0]]
-                if len(df) >= limit:
-                    df = df[:limit]
-                    break
-            except pyarrow.lib.ArrowInvalid:
-                pass
+        return self.slice_df_with_period(df, period)
 
-        return (
-            df
-            if period is None
-            else df[period[0] or datetime.min : period[1] or datetime.max]
-        )
+    def get_first_timestamp(self, name: str, train_id: str = None) -> pd.Timestamp:
+        """Get the first timestamp for a specific train_id or for all trains"""
+        if train_id:
+            files = self._list_files(f"{self.path}/{name}/{train_id}", invert=True)
+        else:
+            files = self._list_files(f"{self.path}/{name}", invert=True)
+
+        if not files:
+            return pd.Timestamp(datetime.max)
+
+        # Get first file
+        first_file = list(files)[-1]
+
+        # Read first file
+        df = pd.read_parquet(first_file)
+        # Return first timestamp
+        return df.index.min()
 
     def get_last_timestamp(self, name: str, train_id: str = None) -> pd.Timestamp:
         """Get the last timestamp for a specific train_id or for all trains"""
@@ -259,12 +273,12 @@ class StorageManager:
 
             if is_first:
                 df = df[df.index >= timestamp]
-                is_first = False
 
             count += len(df)
-            if count >= amount:
+            if count >= (amount or 0):
                 return True
-
+        if count >= (amount or 0):
+            return True
         return False
 
     def retrieve_train_ids(self) -> List[str]:
