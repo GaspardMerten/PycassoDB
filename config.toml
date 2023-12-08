@@ -1,7 +1,7 @@
 [globals]
 
-storage_folder = "data_2"
-runner_persistence = "data_2/runner_persistence.json"
+storage_folder = "data"
+runner_persistence = "data/runner_persistence.json"
 
 [components]
 
@@ -13,36 +13,43 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
-[components.ma_outliers]
+[components.chainsaw_preprocess]
 
-class = "components.moving_average_outliers.MovingAverageOutlierDetector"
+class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
 dependencies = [
-   { component = "source", batch_size = 100 }
+    { component = "source", batch_size = 1_000 }
 ]
 
-window = 10
-tolerance = 2
 
-
-[components.dbscan]
-
-class = "components.dbscan.DBScanOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-
-
-
-
-[components.kmeans]
-
-class = "components.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-
+#[components.ma_outliers]
+#
+#class = "components.moving_average_outliers.MovingAverageOutlierDetector"
+#dependencies = [
+#   { component = "source", batch_size = 100 }
+#]
+#
+#window = 10
+#tolerance = 2
+#
+#
+#[components.dbscan]
+#
+#class = "components.dbscan.DBScanOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+#]
+#per_train = true
+#run_per_train = false
+#
+#
+#[components.kmeans]
+#
+#class = "components.kmeans.KMeansOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }, # 10_000 is roughly 1 day
+#    { component = "preprocess", batch_size = 10_000 }
+#]
+#per_train = true
+#run_per_train = false
+#
 
