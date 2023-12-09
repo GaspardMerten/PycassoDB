@@ -34,8 +34,6 @@ per_train = true
 run_per_train = false
 
 
-
-
 [components.kmeans]
 
 class = "components.kmeans.KMeansOutliers"
