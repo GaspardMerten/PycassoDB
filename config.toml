@@ -13,6 +13,14 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
+[components.chainsaw_preprocess]
+
+class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
+dependencies = [
+    { component = "source", batch_size = 1_000 }
+]
+
+
 [components.dbscan]
 
 class = "components.dbscan.DBScanOutliers"
