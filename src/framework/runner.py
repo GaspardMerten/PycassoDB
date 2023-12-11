@@ -10,7 +10,6 @@ from src.framework.period import build_period_from_frequency
 from src.framework.runner_persistence import RunnerPersistence
 from src.framework.storage import StorageManager
 
-
 __all__ = ["run_pipeline"]
 
 def _instantiate_component_from_config(component: ConfigComponent):
@@ -48,6 +47,7 @@ def _component_should_run(
                 _train_id,
             ):
                 return True
+        return False
     elif not storage_manager.has_sufficient_data_since(
         start_timestamp,
         dependency.batch_size,

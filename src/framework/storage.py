@@ -140,7 +140,6 @@ class StorageManager:
         :param name: The name of the dataset
         :param train_id: Optional, the train_id to group by
         """
-
         if data.empty:
             return
 
@@ -224,6 +223,8 @@ class StorageManager:
         for train_id in self.retrieve_train_ids():
             train_df = self.get_for_train(name, train_id, period, limit, invert)
             train_df["train_id"] = int(train_id)
+            if train_df.empty:
+                continue
             df = pd.concat([df, train_df])
 
         # Sort by timestamp
@@ -253,7 +254,7 @@ class StorageManager:
             files = self._list_files(f"{self.path}/{name}", invert=True)
 
         if not files:
-            return pd.Timestamp(datetime.max)
+            return pd.Timestamp.min
 
         # Get first file
         first_file = list(files)[-1]

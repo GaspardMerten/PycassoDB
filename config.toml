@@ -13,44 +13,25 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
-[components.chainsaw_preprocess]
 
-class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
-dependencies = [
-    { component = "source", batch_size = 1_000 }
-]
+[components.random_forest_outliers]
 
-
-[components.dbscan]
-
-class = "components.dbscan.DBScanOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-
-
-[components.kmeans]
-
-class = "components.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-
-
-
-
-[components.test]
-
-class = "components.test.TestOutliers"
+class = "components.random_forest.RandomForestOutliers"
 dependencies = [
     { component = "source", frequency = "1d" },
-    { component = "source", frequency = "1d", before = true }
 ]
-per_train = true
+y = "water_temp_1"
+X = ["air_temp_1", "air_temp_2", "oil_temp_1", "oil_temp_2", "rpm_1", "rpm_2"]
 run_per_train = true
+
+[components.prophet_outliers]
+
+class = "components.prophet.ProphetOutliers"
+dependencies = [
+    { component = "source", frequency = "7d" },
+    { component = "source", frequency = "30d", before = true }
+]
+y = "air_temp_1"
+run_per_train = false
 
 

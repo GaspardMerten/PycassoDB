@@ -79,7 +79,6 @@ def _parse_components(components) -> Dict[str, ConfigComponent]:
             ConfigDependency(**dep, components=parsed_components)
             for dep in dependencies
         ]
-
         component = ConfigComponent(
             name=key,
             component_class=value.pop("class"),

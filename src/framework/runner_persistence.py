@@ -67,6 +67,7 @@ class RunnerPersistence:
         Retrieves the last timestamp for a specified component.
         """
         key = f"{component}_{train_id}" if train_id else component
+
         return pd.Timestamp(self.memory.get(key, datetime.min))
 
     def acquire_for_lock(self):
