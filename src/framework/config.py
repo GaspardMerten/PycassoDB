@@ -52,6 +52,8 @@ class ConfigComponent:
     run_per_train: bool = True
     dependencies: List[ConfigDependency] = None
     settings: dict = None
+    outliers_producer: bool = False
+    intensity_column: str = None
 
 
 @dataclass
@@ -85,7 +87,10 @@ def _parse_components(components) -> Dict[str, ConfigComponent]:
             multiple_outputs=value.pop("multiple_outputs", False),
             per_train=value.pop("per_train", True),
             run_per_train=value.pop("run_per_train", True),
+            outliers_producer=value.pop("outliers_producer", False),
+            intensity_column=value.pop("intensity_column", None),
             dependencies=parsed_dependencies,
+            # Pop everything else into settings
             settings=value,
         )
         parsed_components[key] = component

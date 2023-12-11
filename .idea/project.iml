@@ -11,4 +11,11 @@
   <component name="SonarLintModuleSettings">
     <option name="uniqueId" value="b9906b6d-8ac5-4755-8be6-267bf5ffb75f" />
   </component>
+  <component name="TemplatesService">
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/interfaces/web/templates" />
+      </list>
+    </option>
+  </component>
 </module>

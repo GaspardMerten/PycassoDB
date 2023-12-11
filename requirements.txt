@@ -7,3 +7,6 @@ pyarrow~=14.0.1
 scikit-learn~=1.3.2
 matplotlib~=3.8.2
 prophet
+fastapi
+uvicorn
+jinja2

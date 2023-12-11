@@ -35,3 +35,46 @@ y = "air_temp_1"
 run_per_train = false
 
 
+
+
+[components.chainsaw_preprocess]
+
+class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
+dependencies = [
+    { component = "source", batch_size = 1_000 }
+]
+
+
+[components.dbscan]
+
+class = "components.dbscan.DBScanOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+]
+per_train = true
+run_per_train = false
+
+
+[components.kmeans]
+
+class = "components.kmeans.KMeansOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+]
+per_train = true
+run_per_train = false
+outlier_producer = true
+intensity_column = "intensity"
+
+
+
+
+[components.test]
+
+class = "components.test.TestOutliers"
+dependencies = [
+    { component = "source", frequency = "1d" },
+    { component = "source", frequency = "1d", before = true }
+]
+per_train = true
+run_per_train = true
