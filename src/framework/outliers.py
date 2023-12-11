@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import List
+
 import pandas as pd
 
 from src.framework import Period, StorageManager
@@ -59,11 +62,7 @@ def compute_ranking_for_train_for_outliers(
         data.groupby("train_id").sum().sort_values(by="intensity", ascending=False)
     )
 
-    return ranking
-
-
-import pandas as pd
-from datetime import datetime
+    return ranking[["intensity"]]
 
 
 def compute_ranking_for_train_for_outliers_degressive(
@@ -84,9 +83,6 @@ def compute_ranking_for_train_for_outliers_degressive(
     :return: A DataFrame containing the ranking for all trains.
     """
 
-    # Ensure that the timestamp column is a datetime object
-    data[timestamp_column] = pd.to_datetime(data[timestamp_column])
-
     # Compute the intensity
     if intensity_column is None:
         data["intensity"] = 1
@@ -97,7 +93,7 @@ def compute_ranking_for_train_for_outliers_degressive(
 
     # Compute the age of each outlier in days
     current_time = datetime.now()
-    data["outlier_age"] = (current_time - data[timestamp_column]).dt.days
+    data["outlier_age"] = (current_time - data.index).days
 
     # Apply decay to intensity based on age
     data["adjusted_intensity"] = (
@@ -112,3 +108,68 @@ def compute_ranking_for_train_for_outliers_degressive(
     )
 
     return ranking
+
+
+def combine_rankings(rankings: List[pd.Series]):
+    """
+    Combine multiple rankings, in order to get a single ranking. The rankings is made by comparing each position in the
+    rankings and assigning a score to each train based on its position in the rankings. The score is computed as the
+    average position in the rankings.
+    :param rankings: The rankings to combine.
+    :return: A DataFrame containing the combined ranking.
+    """
+
+    # First, compute the rank of each train in each ranking
+    ranks = []
+
+    for ranking in rankings:
+        print(ranking.rank(ascending=True))
+        ranks.append(ranking.rank(ascending=True))
+
+    # Then, compute the average rank for each train
+    combined_ranking = pd.concat(ranks, axis=1).mean(axis=1)
+
+    # Sort the ranking
+    combined_ranking = combined_ranking.sort_values(ascending=False)
+
+    return combined_ranking
+
+
+def get_ranking_for_components(
+    components: List,
+    storage_manager: StorageManager,
+    period: Period = None,
+    decay: bool = False,
+) -> pd.Series:
+    rankings = []
+    for component in components:
+        if period is None:
+            period = _get_last_30_days(component, storage_manager)
+
+        args = dict(
+            data=storage_manager.get_for_all_trains(component.name, period),
+            intensity_column=component.intensity_column,
+            intensity_mode="multiplicative",
+        )
+
+        if decay:
+            ranking = compute_ranking_for_train_for_outliers_degressive(**args)
+        else:
+            ranking = compute_ranking_for_train_for_outliers(**args)
+
+        rankings.append(ranking)
+
+    combined_ranking = combine_rankings(rankings)
+
+    return combined_ranking
+
+
+def _get_last_30_days(component, storage_manager):
+    end_timestamp = max(
+        {
+            storage_manager.get_last_timestamp(component.name, train_id)
+            for train_id in storage_manager.retrieve_train_ids()
+        }
+    )
+    period = (end_timestamp - pd.Timedelta(days=30), end_timestamp)
+    return period

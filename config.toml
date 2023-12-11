@@ -23,6 +23,7 @@ dependencies = [
 y = "water_temp_1"
 X = ["air_temp_1", "air_temp_2", "oil_temp_1", "oil_temp_2", "rpm_1", "rpm_2"]
 run_per_train = true
+outliers_producer = true
 
 [components.prophet_outliers]
 
@@ -52,6 +53,8 @@ dependencies = [
     { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
 ]
 per_train = true
+outliers_producer = true
+intensity_column = "intensity"
 run_per_train = false
 
 
@@ -63,7 +66,7 @@ dependencies = [
 ]
 per_train = true
 run_per_train = false
-outlier_producer = true
+outliers_producer = true
 intensity_column = "intensity"
 
 
