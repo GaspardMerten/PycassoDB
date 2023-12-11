@@ -8,9 +8,11 @@ __all__ = ["ConfigComponent", "ConfigDependency", "load_config"]
 @dataclass
 class ConfigDependency:
     component: str
-    batch_size: int
+    batch_size: int = None
+    frequency: str = None
     all_trains: bool = False
     components: Dict[str, "ConfigComponent"] = None
+    before: bool = False
 
     @property
     def get_component(self):
@@ -46,7 +48,8 @@ def _parse_components(components) -> Dict[str, ConfigComponent]:
     for key, value in components.items():
         dependencies = value.pop("dependencies", [])
         parsed_dependencies = [
-            ConfigDependency(**dep, components=parsed_components) for dep in dependencies
+            ConfigDependency(**dep, components=parsed_components)
+            for dep in dependencies
         ]
 
         component = ConfigComponent(
