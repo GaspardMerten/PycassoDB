@@ -1,4 +1,11 @@
-def moving_average(ts, window_size, shift=None):
+__all__ = ["moving_average"]
+
+import pandas
+
+
+def moving_average(
+    ts: pandas.Series, window_size: int, shift: int = None
+) -> pandas.Series:
     """
     This function takes a time series as input and returns the moving average
     of the time series, shifted by the given shift. If no shift is given, the
@@ -10,5 +17,3 @@ def moving_average(ts, window_size, shift=None):
     """
 
     return ts.rolling(window_size).mean().shift(shift or window_size // 2)
-
-

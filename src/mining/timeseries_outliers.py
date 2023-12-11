@@ -1,5 +1,7 @@
 import pandas as pd
 
+__all__ = ["compute_outliers"]
+
 
 def compute_outliers(ts1: pd.Series, ts2: pd.Series, tolerance: int) -> pd.Series:
     """

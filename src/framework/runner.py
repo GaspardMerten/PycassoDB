@@ -1,15 +1,19 @@
+import logging
 import multiprocessing
 import time
-from datetime import timedelta, datetime
+from typing import Union
 
 import pandas as pd
 
-from src.framework.config import ConfigComponent, load_config
+from src.framework.config import ConfigComponent, load_config_from_file
+from src.framework.period import build_period_from_frequency
 from src.framework.runner_persistence import RunnerPersistence
 from src.framework.storage import StorageManager
 
 
-def instantiate_component(component: ConfigComponent):
+__all__ = ["run_pipeline"]
+
+def _instantiate_component_from_config(component: ConfigComponent):
     """Instantiate a component from a component class string."""
     file = ".".join(component.component_class.split(".")[:-1])
     class_name = component.component_class.split(".")[-1]
@@ -21,64 +25,66 @@ def instantiate_component(component: ConfigComponent):
     return instance
 
 
-def _build_period_from_frequency(
-    frequency: str, last_timestamp: pd.Timestamp, before: bool
+def _component_should_run(
+    dependency, get_name, is_before, period, storage_manager, train_id
 ):
     """
-    Build a period from a frequency and a last timestamp. A frequency is [0-9]+[h|d|w|m]. The period is the next/previous
-    one from the last timestamp, rounded to the period.
-    :param frequency: The frequency
-    :param last_timestamp: The last timestamp
-    :param before: Whether to get the previous period or the next one
-    :return: A period (start, end)
+    Check if the component should run, depending on the dependency. If the dependency is before, then the component
+    skips the dependency (since past data is not required by definition). Otherwise, the component checks if the
+    dependency has sufficient data. If the dependency has sufficient data, then the component should run. Otherwise,
+    the component should not run.
     """
+    if is_before:
+        return True
 
-    # Get the period from the frequency
-    period = frequency[-1]
-    period = {
-        "h": "H",
-        "d": "D",
-        "w": "W",
-        "m": "M",
-    }[period]
+    start_timestamp = period[1] if dependency.frequency else period[0]
 
-    timedelta_period = {
-        "H": timedelta(hours=1),
-        "D": timedelta(days=1),
-        "W": timedelta(weeks=1),
-        "M": timedelta(days=30),
-    }[period]
+    if not train_id and dependency.get_component.per_train:
+        for _train_id in storage_manager.retrieve_train_ids():
+            if storage_manager.has_sufficient_data_since(
+                start_timestamp,
+                dependency.batch_size,
+                get_name,
+                _train_id,
+            ):
+                return True
+    elif not storage_manager.has_sufficient_data_since(
+        start_timestamp,
+        dependency.batch_size,
+        get_name,
+        train_id,
+    ):
+        return False
 
-    # Get the number of periods from the frequency
-    n_periods = int(frequency[:-1])
-
-    # Get the last timestamp rounded to the period
-    last_timestamp = last_timestamp.round(period)
-
-    # Convert last timestamp to a datetime
-    last_timestamp = last_timestamp.to_pydatetime()
-
-    # Get the next/previous period
-    if before:
-        try:
-            start = last_timestamp - timedelta_period * n_periods
-        except OverflowError:
-            start = datetime.min
-        end = last_timestamp
-    else:
-        start = last_timestamp
-        end = last_timestamp + timedelta_period * n_periods
-    # Reconverting to pandas timestamp
-
-    return start, end
+    return True
 
 
-def run_component(
+def _run_component_once(
     storage_manager: StorageManager,
     runner_persistence: RunnerPersistence,
     component: ConfigComponent,
     train_id: str = None,
 ):
+    """
+    Run a component once. The caller is responsible for specifying whether the component should run for all trains or
+    for a specific train (this behaviour is defined in the component configuration).
+
+    If the component never ran the method get_starting_timestamp_for_all_dependencies will be called to get the minimum
+    timestamp for all dependencies. Otherwise, the last timestamp will be retrieved from the runner persistence.
+
+    The last timestamp is defined as the maximum timestamp of all used dependencies. If a period is used, then the
+    maximum timestamp of the period is used instead of the last timestamp of the values.
+
+    The component will run if at least one dependency is not before. Otherwise, the system will raise an assertion error.
+
+
+
+    :param storage_manager:
+    :param runner_persistence:
+    :param component:
+    :param train_id:
+    :return:
+    """
     should_run = True
 
     data = {}
@@ -87,7 +93,7 @@ def run_component(
     # Check if at least one dependency is not before (if no dependency, then it is not before)
     has_one_not_before = len(component.dependencies) == 0
 
-    starting_timestamp = get_starting_timestamp_for_all_dependecies(
+    starting_timestamp = _get_starting_timestamp_for_all_dependencies(
         component, runner_persistence, storage_manager, train_id
     )
 
@@ -109,70 +115,50 @@ def run_component(
             limit = dependency.batch_size
 
         if dependency.frequency:
-            period = _build_period_from_frequency(
+            period = build_period_from_frequency(
                 dependency.frequency, last_timestamp, is_before
             )
 
-        get_name = dependency.component
-        get_complete_name = get_name + ("_before" if is_before else "")
-        if not is_before:
-            if not train_id and dependency.get_component.per_train:
-                at_least_one_train = False
-                for _train_id in storage_manager.retrieve_train_ids():
-                    if storage_manager.has_sufficient_data_since(
-                        period[1] if dependency.frequency else period[0],
-                        dependency.batch_size,
-                        get_name,
-                        _train_id,
-                    ):
-                        at_least_one_train = True
-                        break
-                should_run = at_least_one_train
-            elif not storage_manager.has_sufficient_data_since(
-                period[1] if dependency.frequency else period[0],
-                dependency.batch_size,
-                get_name,
-                train_id,
-            ):
-                should_run = False
-                break
-        if component.run_per_train and dependency.get_component.per_train:
-            data[get_complete_name] = storage_manager.get_for_train(
-                get_name,
-                train_id,
-                period,
-                limit,
-                invert=is_before,
-            )
-        elif dependency.get_component.per_train:
-            data[get_complete_name] = storage_manager.get_for_all_trains(
-                get_name,
-                period,
-                limit,
-                invert=is_before,
-            )
-        else:
-            data[get_complete_name] = storage_manager.get_for_agnostic(
-                get_name,
-                period,
-                limit,
-                invert=is_before,
-            )
+        # Different from the dependency name, which is the name of the component + _before if before is True,
+        # the component name is the name of the component without the _before suffix, used to retrieve the data,
+        # while the dependency name is used for running the component.
+        component_name = dependency.component
+
+        # Check if the component should run, depending on the dependency
+        should_run = should_run and _component_should_run(
+            dependency,
+            component_name,
+            is_before,
+            period,
+            storage_manager,
+            train_id,
+        )
+
+        data[dependency.name] = _get_data_from_dependency(
+            component,
+            component_name,
+            dependency,
+            is_before,
+            limit,
+            period,
+            storage_manager,
+            train_id,
+        )
 
         if not dependency.before:
             if dependency.frequency:
                 max_timestamps.append(period[1])
             else:
-                max_timestamps.append(data[get_name].index.max())
+                max_timestamps.append(data[component_name].index.max())
 
     assert (
         has_one_not_before
     ), "At least one dependency should not be before, otherwise the component will always run on the first data"
 
     if should_run:
-        print("Running component", component.name)
+        logging.info(f"Running component {component.name} for train {train_id}")
         # Instantiate component
-        instance = instantiate_component(component)
+        instance = _instantiate_component_from_config(component)
         # Run component
         if component.multiple_outputs:
             dfs = instance.run(**data)
@@ -188,9 +174,49 @@ def run_component(
             )
 
 
-def get_starting_timestamp_for_all_dependecies(
-    component, runner_persistence, storage_manager, train_id
+def _get_data_from_dependency(
+    component,
+    component_name,
+    dependency,
+    is_before,
+    limit,
+    period,
+    storage_manager,
+    train_id,
 ):
+    if component.run_per_train and dependency.get_component.per_train:
+        return storage_manager.get_for_train(
+            component_name,
+            train_id,
+            period,
+            limit,
+            invert=is_before,
+        )
+    elif dependency.get_component.per_train:
+        return storage_manager.get_for_all_trains(
+            component_name,
+            period,
+            limit,
+            invert=is_before,
+        )
+    else:
+        return storage_manager.get_for_agnostic(
+            component_name,
+            period,
+            limit,
+            invert=is_before,
+        )
+
+
+def _get_starting_timestamp_for_all_dependencies(
+    component: ConfigComponent,
+    runner_persistence: RunnerPersistence,
+    storage_manager: StorageManager,
+    train_id: str = None,
+) -> Union[pd.Timestamp, None]:
+    """
+    If the component never ran, then get the minimum timestamp for all dependencies. Otherwise, return None.
+    """
     min_timestamp = None
 
     train_ids = storage_manager.retrieve_train_ids()
@@ -213,31 +239,51 @@ def get_starting_timestamp_for_all_dependecies(
     return min_timestamp
 
 
-def run_component_process(storage_manager, runner_persistence, component):
+def _run_component_for_ever(
+    storage_manager: StorageManager,
+    runner_persistence: RunnerPersistence,
+    component: ConfigComponent,
+):
+    """
+    Run a component forever. If the component is run per train, then it will run for each train.
+    """
     while True:
         if component.run_per_train:
             ids = storage_manager.retrieve_train_ids()
             for train_id in ids:
-                run_component(storage_manager, runner_persistence, component, train_id)
+                _run_component_once(
+                    storage_manager, runner_persistence, component, train_id
+                )
         else:
-            run_component(storage_manager, runner_persistence, component)
+            _run_component_once(storage_manager, runner_persistence, component)
 
         time.sleep(5)
 
 
-def run(config_path="config.toml"):
-    config = load_config(config_path)
+def run_pipeline(config_path: str = "config.toml"):
+    """
+    Run all components in the configuration file in separate processes. (Also instantiates the storage manager and the
+    runner persistence.)
+
+    :param config_path: The path to the configuration file (default: config.toml)
+    :return: None
+    """
+
+    # Load the global and component configuration
+    config = load_config_from_file(config_path)
+    # Instantiate the storage manager, which handles all data storage for the components
     storage_manager = StorageManager(config.storage_folder)
+    # Instantiate the runner persistence, which handles the persistence of the runner
     runner_persistence = RunnerPersistence(
         config.runner_persistence, lock=multiprocessing.Lock()
     )
 
+    # Run all components in separate processes
     processes = []
 
     for component in config.components.values():
-        # Create a separate process for each component
         process = multiprocessing.Process(
-            target=run_component_process,
+            target=_run_component_for_ever,
             args=(storage_manager, runner_persistence, component),
         )
         processes.append(process)

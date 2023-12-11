@@ -1,6 +1,9 @@
 import pandas as pd
 
 
+__all__ = ["find_trip_split_indexes"]
+
+
 def find_trip_split_indexes(data: pd.DataFrame, threshold):
     """
     This function takes data as input and splits it into trips time series.
@@ -12,11 +15,11 @@ def find_trip_split_indexes(data: pd.DataFrame, threshold):
     :return: A list of segments containing index pairs, each segment is a trip
     """
     # Verify that the data contains a timestamp column
-    if 'timestamps_UTC' not in data.columns:
-        raise ValueError('The data does not contain a timestamp column')
+    if "timestamps_UTC" not in data.columns:
+        raise ValueError("The data does not contain a timestamp column")
 
     # Sort the data by timestamp
-    data = data.sort_values(by='timestamps_UTC')
+    data = data.sort_values(by="timestamps_UTC")
 
     # Separate data by duration without data
     data_sample = data.copy()
@@ -25,7 +28,7 @@ def find_trip_split_indexes(data: pd.DataFrame, threshold):
     data_sample = data_sample.reset_index(drop=True)
 
     # Get the difference between consecutive timestamps
-    diff = data_sample['timestamps_UTC'].diff()
+    diff = data_sample["timestamps_UTC"].diff()
 
     # Get the right side indexes where the difference is bigger than 30min
     idx_left = diff[diff > pd.Timedelta(minutes=threshold)].index

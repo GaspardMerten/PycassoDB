@@ -15,6 +15,7 @@ class ChainSawProcessing(Component):
 
         pre = len(df)
 
+        df["time_difference"] = df.index.to_series().diff()
         # TODO: those are not interesting, we are just removing the first data of each trip
         #       we better use the fact that there is nothing around, not just before the tuple
         # Remove data when consecutive timestamps delta is bigger than 30min

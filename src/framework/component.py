@@ -2,6 +2,7 @@ import abc
 
 import pandas as pd
 
+__all__ = ["Component"]
 
 class Component(abc.ABC):
     def __init__(self, config: dict = None):

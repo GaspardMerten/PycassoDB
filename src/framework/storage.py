@@ -7,7 +7,9 @@ from typing import Tuple, Union, List, Iterable
 import pandas as pd
 import pyarrow
 
-Period = Tuple[Union[datetime, None], Union[datetime, None]]
+__all__ = ["StorageManager", "Period"]
+
+Period = Tuple[Union[pd.Timestamp, None], Union[pd.Timestamp, None]]
 
 
 def _read_rows_from_files(files, limit):
@@ -25,6 +27,31 @@ def _read_rows_from_files(files, limit):
 
 
 class StorageManager:
+    """
+    A class for managing storage of data.
+
+    Attributes:
+        path (str): The file path for storing the data.
+        _cached_train_ids (set): A set of cached train ids.
+
+    Methods:
+        _update_train_ids(train_ids): Updates the cached train ids and the train_ids.json file.
+        _append_df_to_parquet(filename, df): Appends new data to an existing parquet file.
+        _validate_index(data): Ensures that the index is a DateTimeIndex.
+        _store_agnostic(date, group, name): Stores data in a single file (data not related to a specific train).
+        _store_per_train(date, data, name, train_id): Stores data in a separate file for each train.
+        store(data, name, train_id): Stores data in parquet files, optionally grouping by train_id.
+        _list_files(directory, period, invert): Lists all files in a directory, optionally filtering by a date period.
+        slice_df_with_period(df, period): Slices a dataframe with a period.
+        get_for_train(name, train_id, period, limit, invert): Gets data for a specific train_id, optionally filtering by a date period.
+        get_for_all_trains(name, period, limit, invert): Gets data for all trains, optionally filtering by a date period.
+        get_for_agnostic(name, period, limit, invert): Gets data not related to a specific train, optionally filtering by a date period.
+        get_first_timestamp(name, train_id): Gets the first timestamp for a specific train_id or for all trains.
+        get_last_timestamp(name, train_id): Gets the last timestamp for a specific train_id or for all trains.
+        has_sufficient_data_since(timestamp, amount, name, train_id): Checks if there is sufficient data since a given timestamp for a specific train_id or for all trains.
+        retrieve_train_ids(): Retrieves all train_ids.
+    """
+
     def __init__(self, path):
         self.path = path
         self._cached_train_ids = None
@@ -161,7 +188,7 @@ class StorageManager:
         return list(os.path.join(directory, file) for file in files)
 
     @staticmethod
-    def slice_df_with_period(df, period: List[pd.Timestamp]):
+    def slice_df_with_period(df, period: Period = None) -> pd.DataFrame:
         """Slice a dataframe with a period"""
         if period:
             start_date, end_date = period
@@ -255,7 +282,7 @@ class StorageManager:
         return df.index.max()
 
     def has_sufficient_data_since(
-        self, timestamp: datetime, amount: int, name: str, train_id: str = None
+        self, timestamp: pd.Timestamp, amount: int, name: str, train_id: str = None
     ) -> bool:
         """Check if there is sufficient data since a given timestamp for a specific train_id or for all trains"""
         if train_id:
