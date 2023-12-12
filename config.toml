@@ -1,7 +1,7 @@
 [globals]
 
-storage_folder = "data_2"
-runner_persistence = "data_2/runner_persistence.json"
+storage_folder = "data"
+runner_persistence = "data/runner_persistence.json"
 
 [components]
 
@@ -13,68 +13,85 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
+#[components.test]
+#
+#class = "components.test.TestOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 1_000 },
+#    { component = "source", batch_size = 1_000, before = true }
+#]
+#per_train = true
+#run_per_train = true
 
-[components.random_forest_outliers]
 
-class = "components.random_forest.RandomForestOutliers"
+[components.data_enriching]
+
+class = "components.preprocess.data_enriching.DataEnrichingComponent"
 dependencies = [
-    { component = "source", frequency = "1d" },
+    { component = "source", batch_size = 10_000 }
 ]
-y = "water_temp_1"
-X = ["air_temp_1", "air_temp_2", "oil_temp_1", "oil_temp_2", "rpm_1", "rpm_2"]
-run_per_train = true
-
-[components.prophet_outliers]
-
-class = "components.prophet.ProphetOutliers"
-dependencies = [
-    { component = "source", frequency = "7d" },
-    { component = "source", frequency = "30d", before = true }
-]
-y = "air_temp_1"
-run_per_train = false
+run_per_train = false # No need to have per train, add data per row
 
 
+#[components.surgeon_preprocessing]
+#
+#class = "components.preprocess.surgeon_processing.SurgeonProcessing"
+#dependencies = [
+#    { component = "source", frequency = "1d" , before = true },
+#    { component = "source", frequency = "1d" }
+#]
+#per_train = true
+#run_per_train = true
 
 
-[components.chainsaw_preprocess]
-
-class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
-dependencies = [
-    { component = "source", batch_size = 1_000 }
-]
-
-
-[components.dbscan]
-
-class = "components.dbscan.DBScanOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-
-
-[components.kmeans]
-
-class = "components.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
-]
-per_train = true
-run_per_train = false
-outlier_producer = true
-intensity_column = "intensity"
+#[components.random_forest_outliers]
+#
+#class = "components.random_forest.RandomForestOutliers"
+#dependencies = [
+#    { component = "source", frequency = "1d" },
+#]
+#y = "water_temp_1"
+#X = ["air_temp_1", "air_temp_2", "oil_temp_1", "oil_temp_2", "rpm_1", "rpm_2"]
+#run_per_train = true
+#
+#[components.prophet_outliers]
+#
+#class = "components.prophet.ProphetOutliers"
+#dependencies = [
+#    { component = "source", frequency = "7d" },
+#    { component = "source", frequency = "30d", before = true }
+#]
+#y = "air_temp_1"
+#run_per_train = false
 
 
 
 
-[components.test]
-
-class = "components.test.TestOutliers"
-dependencies = [
-    { component = "source", frequency = "1d" },
-    { component = "source", frequency = "1d", before = true }
-]
-per_train = true
-run_per_train = true
+#[components.chainsaw_preprocess]
+#
+#class = "components.preprocess.chainsaw_processing.ChainSawProcessing"
+#dependencies = [
+#    { component = "source", batch_size = 1_000 }
+#]
+#
+#
+#[components.dbscan]
+#
+#class = "components.dbscan.DBScanOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+#]
+#per_train = true
+#run_per_train = false
+#
+#
+#[components.kmeans]
+#
+#class = "components.kmeans.KMeansOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 } # 10_000 is roughly 1 day
+#]
+#per_train = true
+#run_per_train = false
+#outlier_producer = true
+#intensity_column = "intensity"
