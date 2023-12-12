@@ -13,6 +13,33 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
+#[components.na_values]
+#
+#class = "components.na_values.NotApplicableCountComponent"
+#dependencies = [
+#    { component = "source", batch_size = 1_000 }
+#]
+
+[components.processed]
+
+class = "components.preprocess.processed.PreprocessingComponent"
+dependencies = [
+    { component = "source", batch_size = 1_000 },
+    { component = "source", frequency = "1d", before = true }
+]
+per_train = true # For the dependency
+run_per_train = true # While running the component
+
+
+#[components.data_enriching]
+#
+#class = "components.preprocess.data_enriching.DataEnrichingComponent"
+#dependencies = [
+#    { component = "processed", batch_size = 10_000 }
+#]
+#run_per_train = false # No need to have per train, add data per row
+
+
 #[components.test]
 #
 #class = "components.test.TestOutliers"
@@ -22,15 +49,6 @@ source = "in/ar41.csv"
 #]
 #per_train = true
 #run_per_train = true
-
-
-[components.data_enriching]
-
-class = "components.preprocess.data_enriching.DataEnrichingComponent"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false # No need to have per train, add data per row
 
 
 #[components.surgeon_preprocessing]
