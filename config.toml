@@ -13,16 +13,18 @@ per_train = true
 run_per_train = false
 source = "in/ar41.csv"
 
-#[components.na_values]
+
+#[components.na_values] # Use source as input and output all the easy outliers due to NA values or 0s in the data
 #
 #class = "components.na_values.NotApplicableCountComponent"
 #dependencies = [
 #    { component = "source", batch_size = 1_000 }
 #]
 
+
 [components.processed]
 
-class = "components.preprocess.processed.PreprocessingComponent"
+class = "components.preprocess.data_cleaning.PreprocessingComponent"
 dependencies = [
     { component = "source", batch_size = 1_000 },
     { component = "source", frequency = "1d", before = true }
@@ -31,13 +33,51 @@ per_train = true # For the dependency
 run_per_train = true # While running the component
 
 
-#[components.data_enriching]
-#
-#class = "components.preprocess.data_enriching.DataEnrichingComponent"
-#dependencies = [
-#    { component = "processed", batch_size = 10_000 }
-#]
-#run_per_train = false # No need to have per train, add data per row
+[components.enriched]
+
+class = "components.preprocess.data_enriching.DataEnrichingComponent"
+dependencies = [
+    { component = "processed", batch_size = 10_000 }
+]
+run_per_train = false # No need to have per train, add data per row
+
+
+[components.chainsawed]
+
+class = "components.preprocess.chainsaw_processing.ChainsawProcessing"
+dependencies = [
+    { component = "enriched", batch_size = 10_000 }
+]
+run_per_train = true
+per_train = true
+
+
+[components.surgery]
+
+class = "components.preprocess.surgeon_processing.SurgeonProcessing"
+dependencies = [
+    { component = "enriched", batch_size = 10_000 },
+]
+run_per_train = true
+per_train = true
+
+
+[components.enriched_chainsawed]
+
+class = "components.preprocess.data_enriching.DataEnrichingComponent"
+dependencies = [
+    { component = "chainsawed", batch_size = 10_000 }
+]
+run_per_train = false # No need to have per train, add data per row
+
+
+[components.enriched_surgery]
+
+class = "components.preprocess.data_enriching.DataEnrichingComponent"
+dependencies = [
+    { component = "surgery", batch_size = 10_000 }
+]
+run_per_train = false # No need to have per train, add data per row
 
 
 #[components.test]
