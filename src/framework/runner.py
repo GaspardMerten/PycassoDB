@@ -109,7 +109,11 @@ def _run_component_once(
         is_before = dependency.before
 
         limit = None
-        period = (last_timestamp + pd.Timedelta(seconds=1), pd.Timestamp.now())
+
+        if is_before:
+            period = (pd.Timestamp.min, last_timestamp)
+        else:
+            period = (last_timestamp + pd.Timedelta(seconds=1), pd.Timestamp.now())
 
         if dependency.batch_size:
             limit = dependency.batch_size
