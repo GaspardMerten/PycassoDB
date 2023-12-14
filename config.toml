@@ -28,7 +28,7 @@ run_per_train = false # No need to have per train, add data per row
 
 class = "components.preprocess.chainsaw_processing.ChainsawProcessing"
 dependencies = [
-    { component = "enriched", batch_size = 200 }
+    { component = "enriched", batch_size = 1000 }
 ]
 run_per_train = true
 per_train = true
@@ -81,8 +81,42 @@ outliers_producer = true
 
 class = "components.general.dbscan.DBScanOutliers"
 dependencies = [
-    { component = "source", frequency = "1d" }
+    { component = "source", batch_size = 10_000 }
 ]
 run_per_train = false
 per_train = true
+outliers_producer = true
+
+
+[components.kmeans]
+
+class = "components.general.kmeans.KMeansOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+
+
+[components.ma_outliers]
+
+class = "components.general.moving_average.MovingAverageOutlierDetector"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+
+[components.na]
+
+class = "components.general.na_values.NotApplicableCountComponent"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+
 

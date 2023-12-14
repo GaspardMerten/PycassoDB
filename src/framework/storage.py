@@ -1,7 +1,9 @@
 import json
 import math
 import os
+import shutil
 from datetime import datetime
+from io import BytesIO
 from typing import Tuple, Union, List, Iterable
 
 import pandas as pd
@@ -95,7 +97,13 @@ class StorageManager:
             # Drop duplicate dates
             df = df[~df.index.duplicated(keep="last")]
 
-        df.to_parquet(filename)
+        # Write to parquet tmp file
+        output_buffer = BytesIO()
+        df.to_parquet(output_buffer, engine="pyarrow")
+        output_buffer.seek(0)
+        # Write to parquet file
+        with open(filename, "wb") as f:
+            shutil.copyfileobj(output_buffer, f)
 
     @staticmethod
     def _validate_index(data):
@@ -310,6 +318,8 @@ class StorageManager:
             try:
                 df = pd.read_parquet(file)
             except pyarrow.lib.ArrowInvalid:
+                continue
+            except OSError:
                 continue
 
             if is_first:

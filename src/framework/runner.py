@@ -12,6 +12,7 @@ from src.framework.storage import StorageManager
 
 __all__ = ["run_pipeline"]
 
+
 def _instantiate_component_from_config(component: ConfigComponent):
     """Instantiate a component from a component class string."""
     file = ".".join(component.component_class.split(".")[:-1])
@@ -77,8 +78,6 @@ def _run_component_once(
 
     The component will run if at least one dependency is not before. Otherwise, the system will raise an assertion error.
 
-
-
     :param storage_manager:
     :param runner_persistence:
     :param component:
@@ -127,6 +126,7 @@ def _run_component_once(
         # the component name is the name of the component without the _before suffix, used to retrieve the data,
         # while the dependency name is used for running the component.
         component_name = dependency.component
+
         # Check if the component should run, depending on the dependency
         should_run = should_run and _component_should_run(
             dependency,
@@ -136,7 +136,6 @@ def _run_component_once(
             storage_manager,
             train_id,
         )
-
 
         data[dependency.name] = _get_data_from_dependency(
             component,
@@ -261,7 +260,7 @@ def _run_component_for_ever(
         else:
             _run_component_once(storage_manager, runner_persistence, component)
 
-        time.sleep(5)
+        time.sleep(10)
 
 
 def run_pipeline(config_path: str = "config.toml"):

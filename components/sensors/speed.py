@@ -5,8 +5,8 @@ from src.mining.outliers_detection import train_speed
 
 
 class TrainTooFastComponent(Component):
-    def run(self, **kwargs):
-        df = train_speed(kwargs.values().__iter__().__next__())
+    def run(self, surgery: pd.DataFrame, ):
+        df = train_speed(surgery)
         df = df[df['speed_too_high']]
         df.sort_index(inplace=True)
 

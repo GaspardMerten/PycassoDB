@@ -9,11 +9,10 @@ from src.mining.timeseries_outliers import compute_outliers
 class MovingAverageOutlierDetector(Component):
     def run(self, source: pd.DataFrame) -> pd.DataFrame:
         """Run the component."""
-
         outliers = pd.DataFrame()
 
         for col in SOURCE_DATA_COLS:
-            window = self.config.get("window")
+            window = self.config.get("window", 10)
 
             ts = pd.Series(source[col], index=source.index)
 
@@ -21,7 +20,7 @@ class MovingAverageOutlierDetector(Component):
             ma = moving_average(ts, window, shift=1)
 
             # Compute outlier
-            col_outliers = compute_outliers(ts, ma, self.config.get("tolerance"))
+            col_outliers = compute_outliers(ts, ma, self.config.get("tolerance", 2))
             df = pd.DataFrame(col_outliers, columns=[col])
             # Rename col to "value"
             df["type"] = col
