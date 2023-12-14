@@ -12,11 +12,19 @@ __all__ = ["StorageManager", "Period"]
 Period = Tuple[Union[pd.Timestamp, None], Union[pd.Timestamp, None]]
 
 
-def _read_rows_from_files(files, limit):
+def _read_rows_from_files(files, limit, period, invert=False):
     df = pd.DataFrame()
     for index, file in enumerate(files):
         try:
-            df = pd.concat([df, pd.read_parquet(file)])
+            new_df = pd.read_parquet(file)
+            new_df = new_df[new_df.index >= period[0]]
+            new_df = new_df[new_df.index <= period[1]]
+
+            if invert:
+                new_df.sort_index(inplace=True, ascending=False)
+
+            df = pd.concat([df, new_df])
+
             if len(df) >= (limit or math.inf):
                 df = df[:limit]
                 break
@@ -177,7 +185,7 @@ class StorageManager:
             files = [
                 file
                 for file in files
-                if start_date <= datetime.strptime(file, "%Y-%m-%d.parquet") <= end_date
+                if start_date.date() <= datetime.strptime(file, "%Y-%m-%d.parquet").date() <= end_date.date()
             ]
 
         files.sort(
@@ -209,7 +217,7 @@ class StorageManager:
     ) -> pd.DataFrame:
         """Get data for a specific train_id, optionally filtering by a date period."""
         files = self._list_files(f"{self.path}/{name}/{train_id}", period, invert)
-        df = _read_rows_from_files(files, limit)
+        df = _read_rows_from_files(files, limit, period,invert)
 
         return self.slice_df_with_period(df, period)
 
@@ -228,7 +236,7 @@ class StorageManager:
             df = pd.concat([df, train_df])
 
         # Sort by timestamp
-        df.sort_index(inplace=True)
+        df.sort_index(inplace=True, ascending=not invert)
 
         # Keep only first limit rows
         if limit:
@@ -242,7 +250,7 @@ class StorageManager:
         """Get data not related to a specific train, optionally filtering by a date period."""
         files = self._list_files(f"{self.path}/{name}", period, invert)
 
-        df = _read_rows_from_files(files, limit)
+        df = _read_rows_from_files(files, limit, period, invert)
 
         return self.slice_df_with_period(df, period)
 

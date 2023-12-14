@@ -9,21 +9,16 @@ class TestOutliers(Component):
         print("Source before")
         print(source_before.index.min())
         print(source_before.index.max())
-
+        print("Count of rows", source_before.shape[0])
         print("Source")
         print(source.index.min())
         print(source.index.max())
+        print("Count of rows", source.shape[0])
 
-        # Print count of rows for each dataframe
-        print("Source before")
 
-        print(source_before.shape[0])
-        print("Source")
-
-        print(source.shape[0])
 
         # return a df only with first row of source and source_before
-        return pd.concat([source_before.head(1), source.head(1)])
+        return pd.DataFrame()
 
 
 

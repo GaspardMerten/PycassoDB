@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Python 3.11 (PycassoDB)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="htmx.org" level="application" />
   </component>
   <component name="SonarLintModuleSettings">
     <option name="uniqueId" value="b9906b6d-8ac5-4755-8be6-267bf5ffb75f" />

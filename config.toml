@@ -21,6 +21,14 @@ source = "in/ar41.csv"
 #    { component = "source", batch_size = 1_000 }
 #]
 
+class = "components.random_forest.RandomForestOutliers"
+dependencies = [
+    { component = "source", frequency = "1d" },
+]
+y = "water_temp_1"
+X = ["air_temp_1", "air_temp_2", "oil_temp_1", "oil_temp_2", "rpm_1", "rpm_2"]
+run_per_train = true
+outliers_producer = true
 
 [components.processed]
 
@@ -50,6 +58,8 @@ dependencies = [
 ]
 run_per_train = true
 per_train = true
+outliers_producer = true
+intensity_column = "intensity"
 
 
 [components.surgery]

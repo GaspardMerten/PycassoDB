@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Predictive Maintenance | SNCB</title>
+    <link rel="stylesheet" href="static/css/output.css">
+</head>
+<body>
+
+{% include 'components/header.html' %}
+
+
+<section class="container mx-auto p-6">
+    <form id="rankingForm"
+          class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 min-w-full leading-normal">
+        <div class="mb-4 flex justify-between items-center">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="rankingType">
+                Select Ranking Type
+            </label>
+            <select id="rankingType" name="selection" multiple
+                    class="shadow border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    style="height: 150px;">
+                <option value="">Global Ranking</option>
+                {% for component in components %}
+                <option value="{{ component }}">{{ component }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    <div class="mt-4">
+        <table class="min-w-full leading-normal">
+            <thead>
+            <tr>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Train ID
+                </th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Ranking
+                </th>
+            </tr>
+            </thead>
+
+            <tbody id="rankingResults">
+            <tr class="hidden" id="rankingRowTemplate">
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <div class="text-gray-900 whitespace-no-wrap">
+                    </div>
+                </td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <div class="text-gray-900 whitespace-no-wrap">
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="text-center justify-center flex" id="loading">
+            <img src="https://cdn.pixabay.com/animation/2023/03/20/02/45/02-45-27-186_512.gif" style="height: 100Px">
+
+        </div>
+    </div>
+</section>
+
+<script>
+
+    function updateRanking(rankingType) {
+
+        // make loading gif visible
+        document.getElementById('loading').classList.remove('hidden');
+
+        // Get the ranking results container
+        const rankingResultsContainer = document.getElementById('rankingResults');
+
+        // Get the ranking row template
+        const rankingRowTemplate = document.getElementById('rankingRowTemplate');
+
+        // Remove all removable rows
+        const removableRows = document.getElementsByClassName('removable');
+        while (removableRows.length > 0) {
+            removableRows[0].parentNode.removeChild(removableRows[0]);
+        }
+
+
+        // Show the ranking results
+        rankingResultsContainer.classList.remove('hidden');
+
+        // Get the ranking results for the selected ranking type
+        fetch('/api/ranking/?selection=' + rankingType)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (rankingData) {
+                // array of objects
+                rankingData.forEach(function (rankingData) {
+                    let trainId = rankingData['train_id'];
+                    let ranking = rankingData['ranking'];
+
+                    // Clone the ranking row template
+                    const rankingRow = rankingRowTemplate.cloneNode(true);
+
+                    // Remove the hidden class
+                    rankingRow.classList.remove('hidden');
+                    rankingRow.classList.add("removable")
+
+                    // Set the train id
+                    rankingRow.querySelector('td:first-child').textContent = trainId;
+
+                    // Set the ranking
+                    rankingRow.querySelector('td:last-child').textContent = ranking;
+
+                    // Append the ranking row to the ranking results
+                    rankingResultsContainer.appendChild(rankingRow);
+
+                });
+
+                // make loading gif invisible
+                document.getElementById('loading').classList.add('hidden');
+            });
+
+    }
+
+    // Listen for changes in the ranking type selection
+    document.getElementById('rankingType').addEventListener('change', function (event) {
+        // Get the selected ranking type
+        const rankingType = event.target.value;
+
+        updateRanking(rankingType);
+    });
+
+    // Make first element selected by default
+    document.getElementById('rankingType').selectedIndex = 0;
+    // Update the ranking
+    updateRanking(document.getElementById('rankingType').value);
+</script>
+
+</body>
+</html>
