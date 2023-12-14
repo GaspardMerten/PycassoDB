@@ -4,7 +4,7 @@ from src.framework.component import Component
 
 
 class TestOutliers(Component):
-    def run(self, source_before: pd.DataFrame,source: pd.DataFrame):
+    def run(self, source_before: pd.DataFrame, source: pd.DataFrame):
         # Print min and max timestamps for each dataframe
         print("Source before")
         print(source_before.index.min())

@@ -3,6 +3,8 @@ import pandas as pd
 
 __all__ = ["find_trip_split_indexes"]
 
+from matplotlib import pyplot as plt
+
 
 def find_trip_split_indexes(data: pd.DataFrame, threshold):
     """
@@ -14,30 +16,30 @@ def find_trip_split_indexes(data: pd.DataFrame, threshold):
     :param threshold: The threshold to split the time series (in minutes)
     :return: A list of segments containing index pairs, each segment is a trip
     """
-    # Verify that the data contains a timestamp column
-    if "timestamps_UTC" not in data.columns:
-        raise ValueError("The data does not contain a timestamp column")
-
-    # Sort the data by timestamp
-    data = data.sort_values(by="timestamps_UTC")
+    # TODO: Verify that the data contains a timestamp index
 
     # Separate data by duration without data
-    data_sample = data.copy()
+    df = data.copy()
 
-    # Reset the index
-    data_sample = data_sample.reset_index(drop=True)
+    # Sort the data by timestamp
+    df.sort_index(inplace=True)
 
     # Get the difference between consecutive timestamps
-    diff = data_sample["timestamps_UTC"].diff()
+    diff = pd.Series(df.index, index=df.index).diff()
+
+    print(diff)
 
     # Get the right side indexes where the difference is bigger than 30min
     idx_left = diff[diff > pd.Timedelta(minutes=threshold)].index
 
+    # Get the difference between consecutive timestamps, but in reverse order
+    s_diff = df.index.to_series().diff(periods=-1)
+
     # Get the left side indexes where the difference is bigger than 30min
-    idx_right = idx_left - 1
+    idx_right = s_diff[s_diff < -pd.Timedelta(minutes=threshold)].index
 
     # Add the first and last indexes
-    idx_left = [0] + idx_left.tolist()
-    idx_right = idx_right.tolist() + [len(data_sample)]
+    idx_left = [df.index.min()] + idx_left.tolist()
+    idx_right = idx_right.tolist() + [df.index.max()]
 
     return [segment for segment in zip(idx_left, idx_right)]
