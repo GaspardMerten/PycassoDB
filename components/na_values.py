@@ -11,11 +11,5 @@ class NotApplicableCountComponent(Component):
         :param source: The dataframe containing the points
         :return: The rows where the value is not applicable
         """
-        df = source.copy()
-
-        # Get the rows where the value is not applicable
-        df = df[df.isna().any(axis=1)]
-
-        print(len(df))
-
-        return df
+        # Get the rows where any value is not applicable
+        return source[source.isna().any(axis=1)]

@@ -17,8 +17,8 @@ class DataEnrichingComponent(Component):
         """
         operational_points = gpd.read_file('backup/operating_points.csv', sep=';')
         operational_points = operational_points[
-            (operational_points['Classification EN'] == 'Station') |
-            (operational_points['Classification EN'] == 'Stop in open track')
+            (operational_points['Classification EN'] == 'Station')
+            # | (operational_points['Classification EN'] == 'Stop in open track')
         ]
 
         # Convert 'Geo Point' column in operational_points to a Point geometry
@@ -39,9 +39,9 @@ class DataEnrichingComponent(Component):
 
         # Add necessary columns from the result
         result_df = source.copy()
-        result_df['nearest_stop'] = merged['Nom FR complet']
+        result_df['nearest_stop'] = merged['Geo Point']
         result_df['stop_type'] = merged['Classification EN']
-        result_df['stop_location'] = merged['Geo Point']
+        result_df['stop_name'] = merged['Nom FR complet']
         result_df['stop_distance'] = merged['geo_distance']
 
         return result_df
