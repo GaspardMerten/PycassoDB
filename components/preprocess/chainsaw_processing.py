@@ -30,13 +30,15 @@ class ChainsawProcessing(Component):
         threshold = pd.Timedelta(minutes=10)
 
         df["time_difference_before"] = df.index.to_series().diff(periods=-1)
-        df["isolated"] = (df["time_difference_before"] < -threshold) & (df["time_difference"] > threshold)
+        df["isolated"] = (df["time_difference_before"] < -threshold) & (
+            df["time_difference"] > threshold
+        )
 
         # Note: speed is in m/s
         # Remove data where speed is smaller than 1km/h but without too much time since last tuple
-        df = df[(df['speed'] >= 1 / 3.6) & (df['time_difference'] < threshold)]
+        df = df[(df["speed"] >= 1 / 3.6) & (df["time_difference"] < threshold)]
         # Remove data where speed is bigger than 100km/h
-        df = df[df['speed'] <= 120 / 3.6]
+        df = df[df["speed"] <= 120 / 3.6]
 
         # Remove data where the sensors are "not working" (return 0)
         # Is the same as saying, either the sensor is broken, or the system is not running, so we don't need that data

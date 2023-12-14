@@ -4,6 +4,8 @@ import pandas as pd
 
 __all__ = ["build_period_from_frequency"]
 
+from pandas._libs import OutOfBoundsDatetime
+
 
 def build_period_from_frequency(
     frequency: str, last_timestamp: pd.Timestamp, before: bool
@@ -37,8 +39,10 @@ def build_period_from_frequency(
     n_periods = int(frequency[:-1])
 
     # Get the last timestamp rounded to the period
-    last_timestamp = last_timestamp.round(period)
-
+    try:
+        last_timestamp = last_timestamp.round(period)
+    except OutOfBoundsDatetime:
+        last_timestamp += timedelta_period
     # Convert last timestamp to a datetime
     last_timestamp = last_timestamp.to_pydatetime()
 

@@ -123,7 +123,6 @@ def combine_rankings(rankings: List[pd.Series]):
     ranks = []
 
     for ranking in rankings:
-        print(ranking.rank(ascending=True))
         ranks.append(ranking.rank(ascending=True))
 
     # Then, compute the average rank for each train

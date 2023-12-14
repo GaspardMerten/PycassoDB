@@ -27,8 +27,6 @@ def find_trip_split_indexes(data: pd.DataFrame, threshold):
     # Get the difference between consecutive timestamps
     diff = pd.Series(df.index, index=df.index).diff()
 
-    print(diff)
-
     # Get the right side indexes where the difference is bigger than 30min
     idx_left = diff[diff > pd.Timedelta(minutes=threshold)].index
 

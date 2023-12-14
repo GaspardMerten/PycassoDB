@@ -12,16 +12,16 @@ def stopped_motors(source: pd.DataFrame):
     df = source.copy()
 
     # Is the motor stopped?
-    df['motor_stopped_1'] = df['oil_press_1'] == 0 & df['rpm_1'] == 0
-    df['motor_stopped_2'] = df['oil_press_2'] == 0 & df['rpm_2'] == 0
+    df['motor_stopped_1'] = (df['oil_press_1'] == 0) & (df['rpm_1'] == 0)
+    df['motor_stopped_2'] = (df['oil_press_2'] == 0) & (df['rpm_2'] == 0)
 
     # Is the RPM measurement faulty?
-    df['faulty_rpm_1'] = df['oil_press_1'] != 0 & df['rpm_1'] == 0
-    df['faulty_rpm_2'] = df['oil_press_2'] != 0 & df['rpm_2'] == 0
+    df['faulty_rpm_1'] = (df['oil_press_1'] != 0) & (df['rpm_1'] == 0)
+    df['faulty_rpm_2'] = (df['oil_press_2'] != 0) & (df['rpm_2'] == 0)
 
     # Is the Oil Pressure measurement faulty?
-    df['faulty_oil_press_1'] = df['oil_press_1'] == 0 & df['rpm_1'] != 0
-    df['faulty_oil_press_2'] = df['oil_press_2'] == 0 & df['rpm_2'] != 0
+    df['faulty_oil_press_1'] = (df['oil_press_1'] == 0) & (df['rpm_1'] != 0)
+    df['faulty_oil_press_2'] = (df['oil_press_2'] == 0) & (df['rpm_2'] != 0)
 
     # Are both motors stopped?
     df['train_stopped'] = df['motor_stopped_1'] & df['motor_stopped_2']

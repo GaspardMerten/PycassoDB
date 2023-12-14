@@ -31,4 +31,3 @@ class RandomForestOutliers(Component):
         outliers = outliers.merge(source, left_index=True, right_index=True)
 
         return outliers
-

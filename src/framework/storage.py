@@ -185,7 +185,9 @@ class StorageManager:
             files = [
                 file
                 for file in files
-                if start_date.date() <= datetime.strptime(file, "%Y-%m-%d.parquet").date() <= end_date.date()
+                if start_date.date()
+                <= datetime.strptime(file, "%Y-%m-%d.parquet").date()
+                <= end_date.date()
             ]
 
         files.sort(
@@ -217,7 +219,7 @@ class StorageManager:
     ) -> pd.DataFrame:
         """Get data for a specific train_id, optionally filtering by a date period."""
         files = self._list_files(f"{self.path}/{name}/{train_id}", period, invert)
-        df = _read_rows_from_files(files, limit, period,invert)
+        df = _read_rows_from_files(files, limit, period, invert)
 
         return self.slice_df_with_period(df, period)
 
@@ -305,7 +307,10 @@ class StorageManager:
         is_first = True
 
         for file in files:
-            df = pd.read_parquet(file)
+            try:
+                df = pd.read_parquet(file)
+            except pyarrow.lib.ArrowInvalid:
+                continue
 
             if is_first:
                 df = df[df.index >= timestamp]
@@ -315,6 +320,7 @@ class StorageManager:
                 return True
         if count >= (amount or 0):
             return True
+
         return False
 
     def retrieve_train_ids(self) -> List[str]:

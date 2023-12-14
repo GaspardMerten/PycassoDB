@@ -5,8 +5,8 @@ from src.mining.outliers_detection import stopped_motors
 
 
 class OilPressureNotMatchingRPMsComponent(Component):
-    def run(self, source: pd.DataFrame):
-        df = stopped_motors(source)
+    def run(self, **kwargs):
+        df = stopped_motors(kwargs.values().__iter__().__next__())
 
         df = df[df['faulty_oil_press_1'] | df['faulty_oil_press_2'] | df['faulty_rpm_1'] | df['faulty_rpm_2']]
 

@@ -127,7 +127,6 @@ def _run_component_once(
         # the component name is the name of the component without the _before suffix, used to retrieve the data,
         # while the dependency name is used for running the component.
         component_name = dependency.component
-
         # Check if the component should run, depending on the dependency
         should_run = should_run and _component_should_run(
             dependency,
@@ -137,6 +136,7 @@ def _run_component_once(
             storage_manager,
             train_id,
         )
+
 
         data[dependency.name] = _get_data_from_dependency(
             component,

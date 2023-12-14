@@ -14,6 +14,7 @@ from src.framework.component import Component
 
 class KMeansOutliers(Component):
     def run(self, source: pd.DataFrame) -> pd.DataFrame:
+        print("KMEANS")
         os.environ["LOKY_MAX_CPU_COUNT"] = "4"
         # Initialize KMeans
         kmeans = KMeans(n_clusters=10, n_init='auto')
