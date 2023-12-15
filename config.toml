@@ -19,7 +19,7 @@ source = "in/ar41.csv"
 
 class = "components.preprocess.data_enriching.DataEnrichingComponent"
 dependencies = [
-    { component = "source", batch_size = 50_000 }
+    { component = "source", batch_size = 10_000 }
 ]
 run_per_train = false # No need to have per train, add data per row
 
@@ -213,4 +213,17 @@ run_per_train = false
 per_train = true
 outliers_producer = true
 
+[components.neural_network_outliers]
 
+class = "components.general.neural_network.NeuralNetworkOutliers"
+dependencies = [
+    { component = "enriched", batch_size = 10_000 },
+    { component = "enriched", batch_size = 50_000, before = true }
+]
+
+X = ['air_temp_1', 'air_temp_2', 'oil_temp_1', 'oil_temp_2', 'water_temp_1', 'water_temp_2', 'temperature', 'relative_humidity', 'stop_distance', 'speed']
+y = 'rpm_1'
+run_per_train = false
+per_train = true
+outliers_producer = true
+slices = [[0, 10_000], [0, 25_000], [0, 50_000]]

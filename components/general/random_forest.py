@@ -32,12 +32,6 @@ class RandomForestOutliers(Component):
         outliers = outliers.merge(source, left_index=True, right_index=True)
 
         if self.debug:
-            # Plot the residuals
-            residuals = source[y_column] - y_pred
-            residuals.plot()
-            # Put X on outliers
-            outliers[y_column].plot(style="ro")
-
-            plt.show()
+            print("Number of outliers:", outliers.shape[0])
 
         return outliers
