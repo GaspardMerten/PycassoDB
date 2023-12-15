@@ -4,6 +4,7 @@ import pandas as pd
 from src.external.openweather import get_weather_for_period
 from src.external.sncb_operating_points import get_operational_points
 from src.framework import Component
+from src.mining.outliers_detection import train_stopped
 
 
 class DataEnrichingComponent(Component):
@@ -15,7 +16,6 @@ class DataEnrichingComponent(Component):
         :param source: The dataframe containing the points
         :return: The dataframe with the new column
         """
-        print("Enriching data...", source.index.min(), source.index.max())
         operational_points_gdf = get_operational_points()
         weather_data_gdf = get_weather_for_period((source.index[0], source.index[-1]))
 
@@ -36,11 +36,9 @@ class DataEnrichingComponent(Component):
             merged, weather_data_gdf, how="left", rsuffix="_weather"
         )
 
-
-
         # Drop geometry columns
         merged.drop(columns=["geometry"], inplace=True)
 
-
+        merged = train_stopped(merged, threshold=500)
 
         return merged

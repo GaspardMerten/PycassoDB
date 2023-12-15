@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def identify_residual_outliers(y, y_pred, std_multiplier=1):
+def identify_residual_outliers(y, y_pred, std_multiplier=2):
     """
     Identify outliers based on the residuals between actual and predicted values.
 
@@ -18,7 +18,7 @@ def identify_residual_outliers(y, y_pred, std_multiplier=1):
     std_dev = np.std(residuals)
 
     # divide residuals by std_dev
-    indices = residuals // std_dev
+    indices = np.abs(residuals // std_dev)
 
     out = pd.DataFrame(indices[indices >= std_multiplier])
     out.columns = ["outlier_index"]

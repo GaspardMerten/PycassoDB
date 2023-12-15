@@ -73,11 +73,13 @@ def train_stopped(source: pd.DataFrame, threshold: float):
     df = source.copy()
 
     threshold = 500  # distance in meters
-    df["at_station"] = (df["stop_type"] == "Station") & (df["stop_distance"] < 500)
-    df["at_stop_point"] = (df["stop_type"] == "Station") & (df["stop_distance"] < 100)
+    df["at_station"] = (df["classification"] == "Station") & (
+        df["stop_distance"] < threshold
+    )
+    df["at_stop_point"] = (df["classification"] != "Station") & (df["stop_distance"] < 100)
 
     # Train under
-    df["train_not_moving"] = (df["speed"] < 1 / 3.6) & (
+    df["train_not_moving"] = (df["speed"] < 1) & (
         df["at_station"] | df["at_stop_point"]
     )
 

@@ -1,4 +1,5 @@
 import pandas as pd
+from matplotlib import pyplot as plt
 
 from src.framework.component import Component
 from src.mining.random_forest import train_random_forest_regressor
@@ -24,10 +25,19 @@ class RandomForestOutliers(Component):
         y_pred = model.predict(source[X_columns])
 
         outliers = identify_residual_outliers(
-            source[y_column], y_pred, self.config.get("std_multiplier", 3)
+            source[y_column], y_pred, self.config.get("std_multiplier", 4)
         )
 
         # Inner join with source to get the train_id
         outliers = outliers.merge(source, left_index=True, right_index=True)
+
+        if self.debug:
+            # Plot the residuals
+            residuals = source[y_column] - y_pred
+            residuals.plot()
+            # Put X on outliers
+            outliers[y_column].plot(style="ro")
+
+            plt.show()
 
         return outliers
