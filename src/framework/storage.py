@@ -32,6 +32,8 @@ def _read_rows_from_files(files, limit, period, invert=False):
                 break
         except pyarrow.lib.ArrowInvalid:
             pass
+        except OSError:
+            pass
 
     return df
 

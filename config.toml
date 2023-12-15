@@ -19,7 +19,7 @@ source = "in/ar41.csv"
 
 class = "components.preprocess.data_enriching.DataEnrichingComponent"
 dependencies = [
-    { component = "source", batch_size = 10_000 }
+    { component = "source", batch_size = 50_000 }
 ]
 run_per_train = false # No need to have per train, add data per row
 
@@ -40,8 +40,7 @@ intensity_column = "intensity"
 
 class = "components.preprocess.surgeon_processing.SurgeonProcessing"
 dependencies = [
-    { component = "enriched", batch_size = 200 },
-    { component = "enriched", batch_size = 200, before = true }
+    { component = "enriched", batch_size = 500 },
 ]
 run_per_train = true
 per_train = true
