@@ -5,7 +5,7 @@ import requests
 
 
 @lru_cache(maxsize=None)
-def get_operational_points() ->  gpd.GeoDataFrame:
+def get_operational_points() -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame.from_features(
         requests.get(
             "https://api.mobilitytwin.brussels/infrabel/operational-points",

@@ -4,5 +4,5 @@
     <option name="enabledOnReformat" value="true" />
     <option name="sdkName" value="Python 3.11 (project) (2)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (project) (2)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (PycassoDB)" project-jdk-type="Python SDK" />
 </project>
