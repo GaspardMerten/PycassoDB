@@ -13,6 +13,6 @@ class NotApplicableCountComponent(Component):
         """
 
         # Keep only rows where at least one value is not applicable/null
-        df = source[source.isnull().any() | source.isna().any() | (source == "na").any()]
+        df = source[source.isnull().any() | source.isna().any() | (source == "na")]
         df.sort_index(inplace=True)
         return df

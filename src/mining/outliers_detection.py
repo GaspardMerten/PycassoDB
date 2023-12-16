@@ -12,29 +12,32 @@ def stopped_motors(source: pd.DataFrame):
     df = source.copy()
 
     # Is the motor stopped?
-    df['motor_stopped_1'] = (df['oil_press_1'] == 0) & (df['rpm_1'] == 0)
-    df['motor_stopped_2'] = (df['oil_press_2'] == 0) & (df['rpm_2'] == 0)
+    df["motor_stopped_1"] = (df["oil_press_1"] == 0) & (df["rpm_1"] == 0)
+    df["motor_stopped_2"] = (df["oil_press_2"] == 0) & (df["rpm_2"] == 0)
 
     # Is the RPM measurement faulty?
-    df['faulty_rpm_1'] = (df['oil_press_1'] != 0) & (df['rpm_1'] == 0)
-    df['faulty_rpm_2'] = (df['oil_press_2'] != 0) & (df['rpm_2'] == 0)
+    df["faulty_rpm_1"] = (df["oil_press_1"] != 0) & (df["rpm_1"] == 0)
+    df["faulty_rpm_2"] = (df["oil_press_2"] != 0) & (df["rpm_2"] == 0)
 
     # Is the Oil Pressure measurement faulty?
-    df['faulty_oil_press_1'] = (df['oil_press_1'] == 0) & (df['rpm_1'] != 0)
-    df['faulty_oil_press_2'] = (df['oil_press_2'] == 0) & (df['rpm_2'] != 0)
+    df["faulty_oil_press_1"] = (df["oil_press_1"] == 0) & (df["rpm_1"] != 0)
+    df["faulty_oil_press_2"] = (df["oil_press_2"] == 0) & (df["rpm_2"] != 0)
 
     # Are both motors stopped?
-    df['train_stopped'] = df['motor_stopped_1'] & df['motor_stopped_2']
-
+    df["train_stopped"] = df["motor_stopped_1"] & df["motor_stopped_2"]
     # Is the train stopped near a train station?
-    df['stopped_at_station'] = df['train_stopped'] & (df['stop_type'] == 'Station') & (df['stop_distance'] <= 1000)
+    df["stopped_at_station"] = (
+        df["train_stopped"]
+        & (df["classification"] == "Station")
+        & (df["stop_distance"] <= 1000)
+    )
     # Note: added a distance measure to ensure that we are not in a workshop (ensure closeness to train station)
 
     # Train stopped but not near a stop point of the train network
-    df['stopped_at_workshop'] = df['train_stopped'] & (df['stop_distance'] > 1000)
+    df["stopped_at_workshop"] = df["train_stopped"] & (df["stop_distance"] > 1000)
 
     # Is only one of the motor stopped?
-    df['eco_mode'] = df['motor_stopped_1'] ^ df['motor_stopped_2']
+    df["eco_mode"] = df["motor_stopped_1"] ^ df["motor_stopped_2"]
 
     return df
 
@@ -43,23 +46,22 @@ def cooling_sensors(source: pd.DataFrame):
     df = source.copy()
 
     # Verify overheating of each sensor
-    df['water_overheating_1'] = df['water_temp_1'] > 100
-    df['water_overheating_2'] = df['water_temp_2'] > 100
+    df["water_overheating_1"] = df["water_temp_1"] > 100
+    df["water_overheating_2"] = df["water_temp_2"] > 100
 
-    df['oil_overheating_1'] = df['oil_temp_1'] > 115
-    df['oil_overheating_2'] = df['oil_temp_2'] > 115
+    df["oil_overheating_1"] = df["oil_temp_1"] > 115
+    df["oil_overheating_2"] = df["oil_temp_2"] > 115
 
-    df['air_overheating_1'] = df['air_temp_1'] > 65
-    df['air_overheating_2'] = df['air_temp_2'] > 65
+    df["air_overheating_1"] = df["air_temp_1"] > 65
+    df["air_overheating_2"] = df["air_temp_2"] > 65
 
     return df
 
 
 def train_speed(source: pd.DataFrame):
     df = source.copy()
-
     # Verify speed of the train (120km/h is train max speed)
-    df['speed_too_high'] = df['speed'] > 120 / 3.6  # conversion from m/s
+    df["speed_too_high"] = df["speed"] > 120
 
     return df
 
@@ -71,10 +73,14 @@ def train_stopped(source: pd.DataFrame, threshold: float):
     df = source.copy()
 
     threshold = 500  # distance in meters
-    df['at_station'] = (df['stop_type'] == 'Station') & (df['stop_distance'] < 500)
-    df['at_stop_point'] = (df['stop_type'] == 'Station') & (df['stop_distance'] < 100)
+    df["at_station"] = (df["classification"] == "Station") & (
+        df["stop_distance"] < threshold
+    )
+    df["at_stop_point"] = (df["classification"] != "Station") & (df["stop_distance"] < 100)
 
     # Train under
-    df['train_not_moving'] = ((df['speed'] < 1 / 3.6) & (df['at_station'] | df['at_stop_point']))
+    df["train_not_moving"] = (df["speed"] < 1) & (
+        df["at_station"] | df["at_stop_point"]
+    )
 
     return df

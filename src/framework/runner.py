@@ -260,7 +260,7 @@ def _run_component_for_ever(
         else:
             _run_component_once(storage_manager, runner_persistence, component)
 
-        time.sleep(10)
+        time.sleep(.1)
 
 
 def run_pipeline(config_path: str = "config.toml"):
