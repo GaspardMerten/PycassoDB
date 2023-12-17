@@ -1,7 +1,7 @@
 [globals]
 
-storage_folder = "data_2"
-runner_persistence = "data_2/runner_persistence.json"
+storage_folder = "data"
+runner_persistence = "data/runner_persistence.json"
 
 [components]
 # Main component, source loads the data from the csv file (after parsing, it deletes the file), whenever a new
@@ -32,198 +32,199 @@ dependencies = [
 ]
 run_per_train = true
 per_train = true
-outliers_producer = true
-intensity_column = "intensity"
+#outliers_producer = true
+#intensity_column = "intensity"
 
 
-[components.surgery]
-
-class = "components.preprocess.surgeon_processing.SurgeonProcessing"
-dependencies = [
-    { component = "enriched", batch_size = 500 },
-]
-run_per_train = true
-per_train = true
-
-
-[components.train_too_fast]
-
-class = "components.sensors.speed.TrainTooFastComponent"
-dependencies = [
-    { component = "surgery", batch_size = 200 }
-]
-run_per_train = true
-per_train = true
-outliers_producer = true
-
-[components.fluid_temperature]
-
-class = "components.sensors.fluid_temperature.FluidOverheatingComponent"
-dependencies = [
-    { component = "chainsawed", batch_size = 200 }
-]
-run_per_train = true
-per_train = true
-outliers_producer = true
-
-[components.rpm_and_oil]
-
-class = "components.sensors.rpm_and_oil.OilPressureNotMatchingRPMsComponent"
-dependencies = [
-    { component = "chainsawed", batch_size = 200 }
-]
-run_per_train = true
-per_train = true
-outliers_producer = true
-
-####################
-# Air temperature #
-####################
-
-[components.air_temp_outliers_kmeans]
-
-class = "components.general.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-features = ['air_temp_1', 'air_temp_2']
-
-[components.air_temp_outliers_dbscan]
-
-class = "components.general.dbscan.DBScanOutliers"
-
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-features = ['air_temp_1', 'air_temp_2']
-
-[components.air_temp_outliers_random_forest]
-
-class = "components.general.random_forest.RandomForestOutliers"
-
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-debug = true
-run_per_train = false
-per_train = true
-outliers_producer = true
-X = ['air_temp_1']
-y = 'air_temp_2'
-
-#########################
-# OilTemp and WaterTemp #
-#########################
-
-[components.oil_temp_outliers_1_kmeans]
-
-class = "components.general.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-features = ['oil_temp_1', 'water_temp_1']
-
-[components.oil_temp_outliers_1_dbscan]
-
-class = "components.general.dbscan.DBScanOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-features = ['oil_temp_1', 'water_temp_1']
-
-[components.oil_temp_outliers_1_random_forest]
-
-class = "components.general.random_forest.RandomForestOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-X = ['oil_temp_1']
-y = 'water_temp_1'
+#[components.surgery]
+#
+#class = "components.preprocess.surgeon_processing.SurgeonProcessing"
+#dependencies = [
+#    { component = "enriched", batch_size = 1_000 },
+#    { component = "enriched", batch_size = 1_000, before = true },
+#]
+#run_per_train = true
+#per_train = true
 
 
-[components.oil_temp_outliers_2_kmeans]
-
-class = "components.general.kmeans.KMeansOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-features = ['oil_temp_2', 'water_temp_2']
-
-[components.oil_temp_outliers_2_dbscan]
-
-class = "components.general.dbscan.DBScanOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-features = ['oil_temp_2', 'water_temp_2']
-
-[components.oil_temp_outliers_2_random_forest]
-
-class = "components.general.random_forest.RandomForestOutliers"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-X = ['oil_temp_2']
-y = 'water_temp_2'
-
-
-
-
-[components.ma_outliers]
-
-class = "components.general.moving_average.MovingAverageOutlierDetector"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-
-[components.na]
-
-class = "components.general.na_values.NotApplicableCountComponent"
-dependencies = [
-    { component = "source", batch_size = 10_000 }
-]
-run_per_train = false
-per_train = true
-outliers_producer = true
-
-[components.neural_network_outliers]
-
-class = "components.general.neural_network.NeuralNetworkOutliers"
-dependencies = [
-    { component = "enriched", batch_size = 10_000 },
-    { component = "enriched", batch_size = 50_000, before = true }
-]
-
-X = ['air_temp_1', 'air_temp_2', 'oil_temp_1', 'oil_temp_2', 'water_temp_1', 'water_temp_2', 'temperature', 'relative_humidity', 'stop_distance', 'speed']
-y = 'rpm_1'
-run_per_train = false
-per_train = true
-outliers_producer = true
-slices = [[0, 10_000], [0, 25_000], [0, 50_000]]
+#[components.train_too_fast]
+#
+#class = "components.sensors.speed.TrainTooFastComponent"
+#dependencies = [
+#    { component = "surgery", batch_size = 200 }
+#]
+#run_per_train = true
+#per_train = true
+#outliers_producer = true
+#
+#[components.fluid_temperature]
+#
+#class = "components.sensors.fluid_temperature.FluidOverheatingComponent"
+#dependencies = [
+#    { component = "chainsawed", batch_size = 200 }
+#]
+#run_per_train = true
+#per_train = true
+#outliers_producer = true
+#
+#[components.rpm_and_oil]
+#
+#class = "components.sensors.rpm_and_oil.OilPressureNotMatchingRPMsComponent"
+#dependencies = [
+#    { component = "chainsawed", batch_size = 200 }
+#]
+#run_per_train = true
+#per_train = true
+#outliers_producer = true
+#
+#####################
+## Air temperature #
+#####################
+#
+#[components.air_temp_outliers_kmeans]
+#
+#class = "components.general.kmeans.KMeansOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#features = ['air_temp_1', 'air_temp_2']
+#
+#[components.air_temp_outliers_dbscan]
+#
+#class = "components.general.dbscan.DBScanOutliers"
+#
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#features = ['air_temp_1', 'air_temp_2']
+#
+#[components.air_temp_outliers_random_forest]
+#
+#class = "components.general.random_forest.RandomForestOutliers"
+#
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#debug = true
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#X = ['air_temp_1']
+#y = 'air_temp_2'
+#
+##########################
+## OilTemp and WaterTemp #
+##########################
+#
+#[components.oil_temp_outliers_1_kmeans]
+#
+#class = "components.general.kmeans.KMeansOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#features = ['oil_temp_1', 'water_temp_1']
+#
+#[components.oil_temp_outliers_1_dbscan]
+#
+#class = "components.general.dbscan.DBScanOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#features = ['oil_temp_1', 'water_temp_1']
+#
+#[components.oil_temp_outliers_1_random_forest]
+#
+#class = "components.general.random_forest.RandomForestOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#X = ['oil_temp_1']
+#y = 'water_temp_1'
+#
+#
+#[components.oil_temp_outliers_2_kmeans]
+#
+#class = "components.general.kmeans.KMeansOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#features = ['oil_temp_2', 'water_temp_2']
+#
+#[components.oil_temp_outliers_2_dbscan]
+#
+#class = "components.general.dbscan.DBScanOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#features = ['oil_temp_2', 'water_temp_2']
+#
+#[components.oil_temp_outliers_2_random_forest]
+#
+#class = "components.general.random_forest.RandomForestOutliers"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#X = ['oil_temp_2']
+#y = 'water_temp_2'
+#
+#
+#
+#
+#[components.ma_outliers]
+#
+#class = "components.general.moving_average.MovingAverageOutlierDetector"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#
+#[components.na]
+#
+#class = "components.general.na_values.NotApplicableCountComponent"
+#dependencies = [
+#    { component = "source", batch_size = 10_000 }
+#]
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#
+#[components.neural_network_outliers]
+#
+#class = "components.general.neural_network.NeuralNetworkOutliers"
+#dependencies = [
+#    { component = "enriched", batch_size = 10_000 },
+#    { component = "enriched", batch_size = 50_000, before = true }
+#]
+#
+#X = ['air_temp_1', 'air_temp_2', 'oil_temp_1', 'oil_temp_2', 'water_temp_1', 'water_temp_2', 'temperature', 'relative_humidity', 'stop_distance', 'speed']
+#y = 'rpm_1'
+#run_per_train = false
+#per_train = true
+#outliers_producer = true
+#slices = [[0, 10_000], [0, 25_000], [0, 50_000]]

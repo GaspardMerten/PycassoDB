@@ -27,9 +27,9 @@ def stopped_motors(source: pd.DataFrame):
     df["train_stopped"] = df["motor_stopped_1"] & df["motor_stopped_2"]
     # Is the train stopped near a train station?
     df["stopped_at_station"] = (
-        df["train_stopped"]
-        & (df["classification"] == "Station")
-        & (df["stop_distance"] <= 1000)
+            df["train_stopped"]
+            & (df["classification"] == "Station")
+            & (df["stop_distance"] <= 500)
     )
     # Note: added a distance measure to ensure that we are not in a workshop (ensure closeness to train station)
 
@@ -61,26 +61,22 @@ def cooling_sensors(source: pd.DataFrame):
 def train_speed(source: pd.DataFrame):
     df = source.copy()
     # Verify speed of the train (120km/h is train max speed)
-    df["speed_too_high"] = df["speed"] > 120
+    df["speed_too_high"] = df["speed"] > 120 / 3.6
 
     return df
 
 
-def train_stopped(source: pd.DataFrame, threshold: float):
+def train_stopped(source: pd.DataFrame, threshold: float = 500, known_speed: bool = False):
     """
     Use the location of the nearest stop point to determine if the train is at rest
     """
     df = source.copy()
 
-    threshold = 500  # distance in meters
-    df["at_station"] = (df["classification"] == "Station") & (
-        df["stop_distance"] < threshold
-    )
+    # threshold is a distance in meters
+    df["at_station"] = (df["classification"] == "Station") & (df["stop_distance"] < threshold)
     df["at_stop_point"] = (df["classification"] != "Station") & (df["stop_distance"] < 100)
 
-    # Train under
-    df["train_not_moving"] = (df["speed"] < 1) & (
-        df["at_station"] | df["at_stop_point"]
-    )
+    if known_speed:
+        df["train_not_moving"] = (df["speed"] < 1) & (df["at_station"] | df["at_stop_point"])
 
     return df

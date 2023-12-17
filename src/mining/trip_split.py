@@ -16,8 +16,6 @@ def find_trip_split_indexes(data: pd.DataFrame, threshold):
     :param threshold: The threshold to split the time series (in minutes)
     :return: A list of segments containing index pairs, each segment is a trip
     """
-    # TODO: Verify that the data contains a timestamp index
-
     # Separate data by duration without data
     df = data.copy()
 
