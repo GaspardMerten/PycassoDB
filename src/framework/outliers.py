@@ -184,7 +184,7 @@ def _get_last_30_days(component_name, storage_manager):
                 for train_id in storage_manager.retrieve_train_ids()
             }
         )
-        period = (end_timestamp - pd.Timedelta(days=7), end_timestamp)
+        period = (end_timestamp - pd.Timedelta(days=30), end_timestamp)
     except ValueError:
         period = None
 
