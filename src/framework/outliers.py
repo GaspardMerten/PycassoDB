@@ -57,9 +57,13 @@ def compute_ranking_for_train_for_outliers(
             lambda x: _intensity_mode_to_function(intensity_mode)(x, 1)
         )
 
+    if "train_id" not in data.columns:
+        print("No train_id column in data")
+        return None
+
     # Compute the ranking
     ranking = (
-        data.groupby("train_id").sum().sort_values(by="intensity", ascending=False)
+        data.groupby("train_id")[["intensity"]].sum().sort_values(ascending=False, by="intensity")
     )
 
     return ranking[["intensity"]]
@@ -69,7 +73,6 @@ def compute_ranking_for_train_for_outliers_degressive(
     data: pd.DataFrame,
     intensity_column: str = None,
     intensity_mode: str = "multiplicative",
-    timestamp_column: str = "timestamp",
     decay_rate: float = 0.1,
 ):
     """
@@ -78,13 +81,12 @@ def compute_ranking_for_train_for_outliers_degressive(
     :param data: The outliers data for all trains.
     :param intensity_column: (Optional) The column to use for the intensity.
     :param intensity_mode: The mode to use for the intensity. Supported values: multiplicative, additive, exponential.
-    :param timestamp_column: The column that contains the timestamp of the outliers.
     :param decay_rate: The rate at which the importance of older outliers decays.
     :return: A DataFrame containing the ranking for all trains.
     """
 
     # Compute the intensity
-    if intensity_column is None:
+    if intensity_column is None or intensity_column not in data.columns:
         data["intensity"] = 1
     else:
         data["intensity"] = data[intensity_column].apply(
@@ -93,12 +95,18 @@ def compute_ranking_for_train_for_outliers_degressive(
 
     # Compute the age of each outlier in days
     current_time = datetime.now()
-    data["outlier_age"] = (current_time - data.index).days
+    # THis line is no longer supported in pandas 1.2.4,
+    data["outlier_age"] = data.index.to_series().apply(
+        lambda x: (current_time - x).days
+    )
 
     # Apply decay to intensity based on age
     data["adjusted_intensity"] = (
         data["intensity"] * (1 - decay_rate) ** data["outlier_age"]
     )
+
+    if data.empty:
+        return None
 
     # Compute the ranking
     ranking = (
@@ -123,7 +131,12 @@ def combine_rankings(rankings: List[pd.Series]):
     ranks = []
 
     for ranking in rankings:
+        if ranking is None:
+            continue
         ranks.append(ranking.rank(ascending=True))
+
+    if not ranks:
+        return None
 
     # Then, compute the average rank for each train
     combined_ranking = pd.concat(ranks, axis=1).mean(axis=1)
@@ -143,7 +156,7 @@ def get_ranking_for_components(
     rankings = []
     for component in components:
         if period is None:
-            period = _get_last_30_days(component, storage_manager)
+            period = _get_last_30_days(component.name, storage_manager)
 
         args = dict(
             data=storage_manager.get_for_all_trains(component.name, period),
@@ -163,12 +176,28 @@ def get_ranking_for_components(
     return combined_ranking
 
 
-def _get_last_30_days(component, storage_manager):
-    end_timestamp = max(
-        {
-            storage_manager.get_last_timestamp(component.name, train_id)
-            for train_id in storage_manager.retrieve_train_ids()
-        }
-    )
-    period = (end_timestamp - pd.Timedelta(days=30), end_timestamp)
+def _get_last_30_days(component_name, storage_manager):
+    try:
+        end_timestamp = max(
+            {
+                storage_manager.get_last_timestamp(component_name, train_id)
+                for train_id in storage_manager.retrieve_train_ids()
+            }
+        )
+        period = (end_timestamp - pd.Timedelta(days=30), end_timestamp)
+    except ValueError:
+        period = None
+
     return period
+
+
+def get_outliers_for_train(
+    train_id: str,
+    component: str,
+    storage_manager: StorageManager,
+    period: Period = None,
+):
+    if period is None:
+        period = _get_last_30_days(component, storage_manager)
+
+    return storage_manager.get_for_train(component,train_id, period)

@@ -9,6 +9,7 @@ from src.mining.residuals_to_outliers import identify_residual_outliers
 
 class MovingAverageOutlierDetector(Component):
     def run(self, surgery: pd.DataFrame) -> pd.DataFrame:
+        print("moving_average")
         """Run the component."""
         outliers = pd.DataFrame()
 
@@ -21,11 +22,21 @@ class MovingAverageOutlierDetector(Component):
                 # Compute moving average
                 ma = moving_average(ts, window, shift=1)
                 # Compute outlier
-                col_outliers = identify_residual_outliers(ts, ma, std_multiplier=4)
-                df = pd.DataFrame(col_outliers, columns=['outlier_index'])
+                col_outliers = identify_residual_outliers(
+                    ts, ma, std_multiplier=4, index=trip.index
+                )
                 # Rename col to "value"
-                df["type"] = col
+                col_outliers["type"] = col
                 # Merge with outliers
-                outliers = pd.concat([outliers, df])
+                outliers = pd.concat([outliers, col_outliers])
+
+                if self.debug:
+                    # Plot the moving average
+                    plt.plot(ts, label="Actual")
+                    plt.plot(ma, label="Moving average")
+                    plt.legend()
+                    plt.show()
+
         outliers.sort_index(inplace=True)
+
         return outliers
