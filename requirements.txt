@@ -19,3 +19,5 @@ starlette~=0.27.0
 requests-cache~=1.1.1
 retry-requests~=2.0.0
 openmeteo-requests
+contextily==1.4.0
+seaborn~=0.13.0

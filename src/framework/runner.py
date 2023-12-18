@@ -159,7 +159,6 @@ def _run_component_once(
     ), "At least one dependency should not be before, otherwise the component will always run on the first data"
 
     if should_run:
-        logging.info(f"Running component {component.name} for train {train_id}")
         # Instantiate component
         instance = _instantiate_component_from_config(component)
         # Run component

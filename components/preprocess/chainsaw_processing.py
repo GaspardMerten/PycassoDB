@@ -21,14 +21,14 @@ class ChainsawProcessing(Component):
         df_labelled = stopped_motors(df)
         df = df[
             # 1. RPM and Oil Pressure
-            df_labelled["faulty_rpm_1"] == False |
-            df_labelled["faulty_rpm_2"] == False |
-            df_labelled["faulty_oil_press_1"] == False |
-            df_labelled["faulty_oil_press_2"] == False |
+            (df_labelled["faulty_rpm_1"] == False) |
+            (df_labelled["faulty_rpm_2"] == False) |
+            (df_labelled["faulty_oil_press_1"] == False) |
+            (df_labelled["faulty_oil_press_2"] == False) |
             # 2. Train stopped at station
-            df_labelled["stopped_at_station"] == False |
+            (df_labelled["stopped_at_station"] == False) |
             # 3. Train stopped at workshop
-            df_labelled["stopped_at_workshop"] == False
+            (df_labelled["stopped_at_workshop"] == False)
         ]
 
         # Remove fluid overheating
