@@ -4,8 +4,7 @@ from src.framework import Component
 from src.mining.outliers_detection import stopped_motors
 
 
-class \
-        OilPressureNotMatchingRPMsComponent(Component):
+class OilPressureNotMatchingRPMsComponent(Component):
     def run(self, chainsawed: pd.DataFrame) -> pd.DataFrame:
         df = stopped_motors(chainsawed)
 
