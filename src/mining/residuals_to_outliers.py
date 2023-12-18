@@ -38,4 +38,5 @@ def identify_residual_outliers(y, y_pred, std_multiplier=2, ids=None, index=None
     out.columns = outliers_col
     # Drop where outliers are NaN
     out.dropna(inplace=True)
+
     return out

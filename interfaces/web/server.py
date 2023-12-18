@@ -61,19 +61,18 @@ async def get_ranking(selection: Optional[List[str]] = None):
     component_names = list(available_components) if not selection else selection
     components = [get_component_from_names(name) for name in component_names]
 
-    progressive_ranking = get_ranking_for_components(components, storage_manager)
+    rankings = []
 
-    # Transform df into a list of dicts
-    progressive_ranking = progressive_ranking.reset_index()
+    for component in components:
+        rankings.append(
+            dict(
+                items=get_ranking_for_components(
+                    [component],
+                    storage_manager,
+                    decay=True,
+                ),
+                name=component.name,
+            )
+        )
 
-    progressive_ranking = progressive_ranking.rename(columns={"index": "train_id", 0: "ranking"})
-
-    output = [
-        {
-            "train_id": row["train_id"],
-            "ranking": row["ranking"],
-        }
-        for _, row in progressive_ranking.iterrows()
-    ]
-
-    return output
+    return rankings

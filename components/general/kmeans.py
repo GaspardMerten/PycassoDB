@@ -13,7 +13,7 @@ class KMeansOutliers(Component):
     def run(self, source: pd.DataFrame) -> pd.DataFrame:
         os.environ["LOKY_MAX_CPU_COUNT"] = "4"
         # Initialize KMeans
-        clusters = 10
+        clusters = self.config.get("clusters", 10)
         kmeans = KMeans(n_clusters=clusters, n_init="auto")
 
         source_features = source[self.config.get("features", SOURCE_DATA_COLS)].copy()

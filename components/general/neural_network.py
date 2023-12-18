@@ -1,4 +1,5 @@
 import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.neural_network import MLPClassifier
 
 from src.framework import Component
@@ -39,16 +40,37 @@ class NeuralNetworkOutliers(Component):
 
         # Predict the outliers using the different models
         outliers = pd.DataFrame()
-
+        preds = []
         for model in trained_models:
             # Predict y for the enriched dataset
             y_pred = model.predict(enriched[X])
+            preds.append(y_pred)
             outliers = pd.concat(
                 [
-                    identify_residual_outliers(enriched[y], y_pred, ids=enriched[["train_id"]], index=enriched.index),
+                    identify_residual_outliers(
+                        enriched[y],
+                        y_pred,
+                        ids=enriched[["train_id"]],
+                        index=enriched.index,
+                    ),
                     outliers,
                 ]
             )
-        print(outliers)
 
+        if self.debug:
+            # Group per train_id and plot y_pred vs y
+            for train_id, group in enriched.groupby("train_id"):
+                plt.plot(
+                    group.index,
+                    group[y],
+                    label="True",
+                )
+                for model in trained_models:
+                    plt.plot(
+                        group.index,
+                        model.predict(group[X]),
+                        label="Predictions",
+                    )
+                plt.title(train_id)
+                plt.show()
         return outliers

@@ -1,16 +1,13 @@
 import pandas as pd
 from matplotlib import pyplot as plt
+import numpy as np
 
 from src.framework.component import Component
 from src.mining.random_forest import train_random_forest_regressor
 from src.mining.residuals_to_outliers import identify_residual_outliers
 
-
 class RandomForestOutliers(Component):
-    def run(
-        self,
-        source: pd.DataFrame,
-    ):
+    def run(self, source: pd.DataFrame):
         if source.empty:
             return pd.DataFrame()
 
@@ -33,5 +30,17 @@ class RandomForestOutliers(Component):
 
         if self.debug:
             print("Number of outliers:", outliers.shape[0])
+
+            # Plot y, y_pred, and outliers
+            plt.figure(figsize=(10, 6))
+            plt.plot(source.index, source[y_column], label='y', alpha=0.5)
+            plt.plot(source.index, source[X_columns[0]], label='x', alpha=0.5)
+            plt.scatter(outliers.index, outliers[y_column], c='red', marker='o', label='Outliers')
+
+            plt.xlabel('Data Points')
+            plt.ylabel('Values')
+            plt.title('Outlier Detection')
+            plt.legend()
+            plt.show()
 
         return outliers
