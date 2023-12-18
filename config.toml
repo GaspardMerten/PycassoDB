@@ -32,199 +32,324 @@ dependencies = [
 ]
 run_per_train = true
 per_train = true
-#outliers_producer = true
-#intensity_column = "intensity"
 
 
-#[components.surgery]
-#
-#class = "components.preprocess.surgeon_processing.SurgeonProcessing"
-#dependencies = [
-#    { component = "enriched", batch_size = 1_000 },
-#    { component = "enriched", batch_size = 1_000, before = true },
-#]
-#run_per_train = true
-#per_train = true
+[components.surgery]
+
+class = "components.preprocess.surgeon_processing.SurgeonProcessing"
+dependencies = [
+    { component = "enriched", batch_size = 1_000 },
+    { component = "enriched", batch_size = 1_000, before = true },
+]
+run_per_train = true
+per_train = true
 
 
-#[components.train_too_fast]
-#
-#class = "components.sensors.speed.TrainTooFastComponent"
-#dependencies = [
-#    { component = "surgery", batch_size = 200 }
-#]
-#run_per_train = true
-#per_train = true
-#outliers_producer = true
-#
-#[components.fluid_temperature]
-#
-#class = "components.sensors.fluid_temperature.FluidOverheatingComponent"
-#dependencies = [
-#    { component = "chainsawed", batch_size = 200 }
-#]
-#run_per_train = true
-#per_train = true
-#outliers_producer = true
-#
-#[components.rpm_and_oil]
-#
-#class = "components.sensors.rpm_and_oil.OilPressureNotMatchingRPMsComponent"
-#dependencies = [
-#    { component = "chainsawed", batch_size = 200 }
-#]
-#run_per_train = true
-#per_train = true
-#outliers_producer = true
-#
-#####################
-## Air temperature #
-#####################
-#
-#[components.air_temp_outliers_kmeans]
-#
-#class = "components.general.kmeans.KMeansOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#features = ['air_temp_1', 'air_temp_2']
-#
-#[components.air_temp_outliers_dbscan]
-#
-#class = "components.general.dbscan.DBScanOutliers"
-#
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#features = ['air_temp_1', 'air_temp_2']
-#
-#[components.air_temp_outliers_random_forest]
-#
-#class = "components.general.random_forest.RandomForestOutliers"
-#
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#debug = true
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#X = ['air_temp_1']
-#y = 'air_temp_2'
-#
-##########################
-## OilTemp and WaterTemp #
-##########################
-#
-#[components.oil_temp_outliers_1_kmeans]
-#
-#class = "components.general.kmeans.KMeansOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#features = ['oil_temp_1', 'water_temp_1']
-#
-#[components.oil_temp_outliers_1_dbscan]
-#
-#class = "components.general.dbscan.DBScanOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#features = ['oil_temp_1', 'water_temp_1']
-#
-#[components.oil_temp_outliers_1_random_forest]
-#
-#class = "components.general.random_forest.RandomForestOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#X = ['oil_temp_1']
-#y = 'water_temp_1'
-#
-#
-#[components.oil_temp_outliers_2_kmeans]
-#
-#class = "components.general.kmeans.KMeansOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#features = ['oil_temp_2', 'water_temp_2']
-#
-#[components.oil_temp_outliers_2_dbscan]
-#
-#class = "components.general.dbscan.DBScanOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#features = ['oil_temp_2', 'water_temp_2']
-#
-#[components.oil_temp_outliers_2_random_forest]
-#
-#class = "components.general.random_forest.RandomForestOutliers"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#X = ['oil_temp_2']
-#y = 'water_temp_2'
-#
-#
-#
-#
-#[components.ma_outliers]
-#
-#class = "components.general.moving_average.MovingAverageOutlierDetector"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#
-#[components.na]
-#
-#class = "components.general.na_values.NotApplicableCountComponent"
-#dependencies = [
-#    { component = "source", batch_size = 10_000 }
-#]
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#
-#[components.neural_network_outliers]
-#
-#class = "components.general.neural_network.NeuralNetworkOutliers"
-#dependencies = [
-#    { component = "enriched", batch_size = 10_000 },
-#    { component = "enriched", batch_size = 50_000, before = true }
-#]
-#
-#X = ['air_temp_1', 'air_temp_2', 'oil_temp_1', 'oil_temp_2', 'water_temp_1', 'water_temp_2', 'temperature', 'relative_humidity', 'stop_distance', 'speed']
-#y = 'rpm_1'
-#run_per_train = false
-#per_train = true
-#outliers_producer = true
-#slices = [[0, 10_000], [0, 25_000], [0, 50_000]]
+[components.train_too_fast]
+
+title = "Speeding Trains"
+description = "Detection of the trains that are going too fast compared to their supposed maximum speed of 120km/h."
+
+class = "components.sensors.speed.TrainTooFastComponent"
+dependencies = [
+    { component = "surgery", batch_size = 200 }
+]
+run_per_train = true
+per_train = true
+outliers_producer = true
+
+[components.fluid_temperature]
+
+title = "Fluid Overheating"
+description = """
+Detection of the trains that have overheated fluid.
+
+The fluid is considered overheated if the temperature is the following technical maximum values:
+- 115°C for the oil
+- 100°C for the water
+- 65°C for the air
+"""
+
+class = "components.sensors.fluid_temperature.FluidOverheatingComponent"
+dependencies = [
+    { component = "chainsawed", batch_size = 200 }
+]
+run_per_train = true
+per_train = true
+outliers_producer = true
+
+[components.rpm_and_oil]
+
+title = "Oil Pressure Not Matching RPMs"
+
+description = """
+Detection of the trains that have oil pressure not matching RPMs.
+
+Oil pressure is supposed to follow the speed of the pieces in the engine, so if the RPMs are high, the oil pressure should be high as well to ensure the engine is properly lubricated.
+"""
+
+class = "components.sensors.rpm_and_oil.OilPressureNotMatchingRPMsComponent"
+dependencies = [
+    { component = "chainsawed", batch_size = 200 }
+]
+run_per_train = true
+per_train = true
+outliers_producer = true
+
+####################
+# Air temperature #
+####################
+
+[components.air_temp_outliers_kmeans]
+
+title = "Air Temperature Outliers #1"
+description = """
+Detection of the trains that have air temperature outliers.
+
+This detection uses the fact that the air temperature entering both engines is highly correlated, so the temperature
+is supposed to be the same (or close) for both sensors, since they come from the same source (outside air).
+"""
+
+class = "components.general.kmeans.KMeansOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+features = ['air_temp_1', 'air_temp_2']
+
+[components.air_temp_outliers_dbscan]
+
+title = "Air Temperature Outliers #2"
+description = """
+Detection of the trains that have air temperature outliers.
+
+This detection uses the fact that the air temperature entering both engines is highly correlated, so the temperature
+is supposed to be the same (or close) for both sensors, since they come from the same source (outside air).
+"""
+
+class = "components.general.dbscan.DBScanOutliers"
+
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+features = ['air_temp_1', 'air_temp_2']
+
+[components.air_temp_outliers_random_forest]
+
+title = "Air Temperature Outliers #3"
+description = """
+Detection of the trains that have air temperature outliers.
+
+This detection uses the fact that the air temperature entering both engines is highly correlated, so the temperature
+is supposed to be the same (or close) for both sensors, since they come from the same source (outside air).
+"""
+
+class = "components.general.random_forest.RandomForestOutliers"
+
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+debug = true
+run_per_train = false
+per_train = true
+outliers_producer = true
+X = ['air_temp_1']
+y = 'air_temp_2'
+
+#########################
+# OilTemp and WaterTemp #
+#########################
+
+[components.oil_temp_outliers_1_kmeans]
+
+title = "Oil/Water Temperature Outliers in PC1 #1"
+description = """
+Detection of the trains that have oil temperature outliers.
+
+This detection uses the fact that the oil temperature and water temperature are highly correlated.
+
+The correlation comes from the fact that the oil and water are both fluids of the same cooling system,
+which means that their values are highly connected.
+"""
+
+class = "components.general.kmeans.KMeansOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+features = ['oil_temp_1', 'water_temp_1']
+
+[components.oil_temp_outliers_1_dbscan]
+
+title = "Oil/Water Temperature Outliers in PC1 #2"
+description = """
+Detection of the trains that have oil temperature outliers.
+
+This detection uses the fact that the oil temperature and water temperature are highly correlated.
+
+The correlation comes from the fact that the oil and water are both fluids of the same cooling system,
+which means that their values are highly connected.
+"""
+
+class = "components.general.dbscan.DBScanOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+features = ['oil_temp_1', 'water_temp_1']
+
+[components.oil_temp_outliers_1_random_forest]
+
+title = "Oil/Water Temperature Outliers in PC1 #3"
+description = """
+Detection of the trains that have oil temperature outliers.
+
+This detection uses the fact that the oil temperature and water temperature are highly correlated.
+
+The correlation comes from the fact that the oil and water are both fluids of the same cooling system,
+which means that their values are highly connected.
+"""
+
+class = "components.general.random_forest.RandomForestOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+X = ['oil_temp_1']
+y = 'water_temp_1'
+
+
+[components.oil_temp_outliers_2_kmeans]
+
+title = "Oil/Water Temperature Outliers in PC2 #1"
+description = """
+Detection of the trains that have oil temperature outliers.
+
+This detection uses the fact that the oil temperature and water temperature are highly correlated.
+
+The correlation comes from the fact that the oil and water are both fluids of the same cooling system,
+which means that their values are highly connected.
+"""
+
+class = "components.general.kmeans.KMeansOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+features = ['oil_temp_2', 'water_temp_2']
+
+[components.oil_temp_outliers_2_dbscan]
+
+title = "Oil/Water Temperature Outliers in PC2 #2"
+description = """
+Detection of the trains that have oil temperature outliers.
+
+This detection uses the fact that the oil temperature and water temperature are highly correlated.
+
+The correlation comes from the fact that the oil and water are both fluids of the same cooling system,
+which means that their values are highly connected.
+"""
+
+class = "components.general.dbscan.DBScanOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+features = ['oil_temp_2', 'water_temp_2']
+
+[components.oil_temp_outliers_2_random_forest]
+
+title = "Oil/Water Temperature Outliers in PC2 #3"
+description = """
+Detection of the trains that have oil temperature outliers.
+
+This detection uses the fact that the oil temperature and water temperature are highly correlated.
+
+The correlation comes from the fact that the oil and water are both fluids of the same cooling system,
+which means that their values are highly connected.
+"""
+
+class = "components.general.random_forest.RandomForestOutliers"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+X = ['oil_temp_2']
+y = 'water_temp_2'
+
+
+
+
+[components.ma_outliers]
+
+title = "Moving Average Outliers"
+description = """
+Comparison between the average values of the sensors over time, and the current value.
+
+If the current value is too far from the average, it is considered an outlier.
+
+Typically, this is used to detect outliers in the sensors that are supposed to be stable over time.
+"""
+
+class = "components.general.moving_average.MovingAverageOutlierDetector"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+
+[components.na]
+
+title = "Not Applicable Values"
+description = """
+Detection of the trains that have not applicable values.
+
+A train having too many values that are not applicable is considered an outlier.
+This is due to too much missing data, meaning that they are not received.
+"""
+
+class = "components.general.na_values.NotApplicableCountComponent"
+dependencies = [
+    { component = "source", batch_size = 10_000 }
+]
+run_per_train = false
+per_train = true
+outliers_producer = true
+
+[components.neural_network_outliers]
+
+title = "Neural Network Outliers"
+description = """
+Detection of the trains that have outliers using a neural network.
+"""
+
+class = "components.general.neural_network.NeuralNetworkOutliers"
+dependencies = [
+    { component = "enriched", batch_size = 10_000 },
+    { component = "enriched", batch_size = 50_000, before = true }
+]
+
+X = ['air_temp_1', 'air_temp_2', 'oil_temp_1', 'oil_temp_2', 'water_temp_1', 'water_temp_2', 'temperature', 'relative_humidity', 'stop_distance', 'speed']
+y = 'rpm_1'
+run_per_train = false
+per_train = true
+outliers_producer = true
+slices = [[0, 10_000], [0, 25_000], [0, 50_000]]
