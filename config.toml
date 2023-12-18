@@ -26,7 +26,6 @@ dependencies = [
 ]
 run_per_train = false # No need to have per train, add data per row
 
-
 [components.chainsawed]
 
 class = "components.preprocess.chainsaw_processing.ChainsawProcessing"
@@ -35,7 +34,6 @@ dependencies = [
 ]
 run_per_train = true
 per_train = true
-
 
 [components.surgery]
 
@@ -147,6 +145,8 @@ outliers_producer = true
 #################
 # Random Forest #
 #################
+
+[components.random_forest]
 
 title = "Random Forest Outliers"
 description = """
@@ -430,7 +430,7 @@ per_train = true
 outliers_producer = true
 features = ['oil_press_1', 'rpm_1']
 
-[components.air_temp_outliers_dbscan]
+[components.oil_press_rpm_outliers_dbscan]
 
 title = "Oil Pressure and RPM #2"
 description = """
@@ -450,7 +450,7 @@ per_train = true
 outliers_producer = true
 features = ['oil_press_1', 'rpm_1']
 
-[components.air_temp_outliers_random_forest]
+[components.oil_press_rpm_outliers_random_forest]
 
 title = "Oil Pressure and RPM #3"
 description = """
